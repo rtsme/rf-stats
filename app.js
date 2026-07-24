@@ -8,21 +8,74 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&am
 const fmt = n => (Math.round(n * 10) / 10).toLocaleString();
 const getJSON = u => fetch(u, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
 
+let PLAYERS = {};  // name(lower) -> slug, for players that have a detail page
+
 function raceTag(race) {
   if (!race) return '<span style="color:var(--dim)">—</span>';
   return `<span class="${race}"><span class="dot ${race}"></span>${esc(race)}</span>`;
 }
+// a player name; clickable (opens detail) only if we published a page for them
+function pName(name) {
+  const known = PLAYERS[String(name || "").toLowerCase()];
+  return `<span class="pname${known ? " known" : ""}"${known ? ` data-name="${esc(name)}"` : ""}>${esc(name)}</span>`;
+}
 
-// ---------- tabs (charts are built lazily so their canvas is visible when sized) ----------
+// ---------- player detail modal ----------
+function closePlayer() { $("#playerModal").hidden = true; }
+async function openPlayer(name) {
+  const slug = PLAYERS[String(name || "").toLowerCase()];
+  if (!slug) return;
+  const card = $("#playerCard");
+  card.innerHTML = '<div class="loading">loading…</div>';
+  $("#playerModal").hidden = false;
+  try {
+    renderPlayer(card, await getJSON(`data/players/${slug}.json`));
+  } catch (e) {
+    card.innerHTML = `<button class="modal-close">×</button><div class="loading">Couldn't load ${esc(name)}.</div>`;
+  }
+}
+const pstat = (label, val) => `<div class="pstat"><b>${esc(val)}</b><span>${esc(label)}</span></div>`;
+function renderPlayer(card, p) {
+  const tags = p.char_class || "";  // race is already shown in the big name
+  const list = (arr, key) => (arr && arr.length)
+    ? arr.map(x => `<li>${pName(x[key])}<span class="x">×${x.c}</span></li>`).join("")
+    : '<li class="dim">—</li>';
+  card.innerHTML = `
+    <button class="modal-close" aria-label="Close">×</button>
+    <div class="phead">
+      <div class="pname-big">${raceTag(p.race)} ${esc(p.name)}</div>
+      ${tags ? `<div class="dim">${esc(tags)}</div>` : ""}
+    </div>
+    <div class="pstats">
+      ${pstat("Kills", p.kills)}${pstat("Deaths", p.deaths)}${pstat("K/D", fmt(p.kd))}
+      ${p.chip_bearer_count ? pstat("Chip bearer", "×" + p.chip_bearer_count) : ""}
+      ${p.weapon ? pstat("Top weapon", p.weapon) : ""}
+      ${p.avg_victim_level != null ? pstat("Avg victim lvl", p.avg_victim_level) : ""}
+    </div>
+    ${p.first_seen ? `<div class="dim small">First seen ${esc(p.first_seen)}</div>` : ""}
+    <div class="pcols">
+      <div><div class="label">Most killed</div><ul class="plist">${list(p.top_victims, "victim")}</ul></div>
+      <div><div class="label">Killed most by</div><ul class="plist">${list(p.nemeses, "killer")}</ul></div>
+    </div>
+    <div class="label">Recent PvP</div>
+    <ul class="plist recent">${(p.recent && p.recent.length)
+      ? p.recent.map(r => `<li><code>${esc(r.event_time)}</code> ${esc(r.message)}</li>`).join("")
+      : '<li class="dim">—</li>'}</ul>`;
+}
+document.addEventListener("click", e => {
+  const pn = e.target.closest(".pname.known");
+  if (pn) return openPlayer(pn.dataset.name);
+  if (e.target.closest(".modal-close") || e.target.classList.contains("modal-bg")) closePlayer();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closePlayer(); });
+
+// ---------- tabs (charts built lazily so their canvas is visible when sized) ----------
 const TAB_INIT = { trends: initTrends };
 const tabDone = {};
 function showTab(name) {
   document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
   document.querySelectorAll("section").forEach(s => s.classList.toggle("active", s.id === name));
-  if (TAB_INIT[name] && !tabDone[name]) {
-    tabDone[name] = true;
-    TAB_INIT[name]().catch(e => console.error(e));
-  }
+  if (TAB_INIT[name] && !tabDone[name]) { tabDone[name] = true; TAB_INIT[name]().catch(e => console.error(e)); }
 }
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
 
@@ -53,7 +106,7 @@ async function loadPotm(key) {
     <div class="spotlight">
       <div>
         <div class="crown">★ CROWNED${wr ? ` · winning race ${esc(wr)}` : ""}</div>
-        <div class="name">${esc(w.name)}</div>
+        <div class="name">${pName(w.name)}</div>
         <div class="who ${w.race || ""}">${raceTag(w.race)}<span style="color:var(--dim);font-weight:600">${warsSub}</span></div>
       </div>
       <div class="score"><b>${fmt(w.score)}</b><span>SCORE</span></div>
@@ -65,7 +118,7 @@ async function loadPotm(key) {
     <div class="label" style="margin-bottom:8px">Runners-up</div>
     <table><thead><tr><th></th><th>Player</th><th>Race</th><th class="num">Wars fought</th><th class="num">Score</th></tr></thead>
       <tbody>${s.runners.map((r, i) =>
-        `<tr><td class="rank">${i + 2}</td><td>${esc(r.name)}</td><td>${raceTag(r.race)}</td>
+        `<tr><td class="rank">${i + 2}</td><td>${pName(r.name)}</td><td>${raceTag(r.race)}</td>
          <td class="num">${r.wars_fought}</td><td class="num score">${fmt(r.score)}</td></tr>`).join("")
       || '<tr><td colspan="5" class="loading">No other ranked players.</td></tr>'}</tbody></table>`;
 }
@@ -78,17 +131,18 @@ function board(title, rows, valLabel) {
   const tbl = el("table");
   tbl.innerHTML = `<thead><tr><th></th><th>Player</th><th>Race</th><th class="num">${esc(valLabel)}</th></tr></thead>
     <tbody>${rows.map((r, i) =>
-      `<tr><td class="rank">${i + 1}</td><td>${esc(r.player)}</td><td>${raceTag(r.race)}</td><td class="num">${r.c}</td></tr>`).join("")
+      `<tr><td class="rank">${i + 1}</td><td>${pName(r.player)}</td><td>${raceTag(r.race)}</td><td class="num">${r.c}</td></tr>`).join("")
     || '<tr><td colspan="4" class="loading">No data.</td></tr>'}</tbody>`;
   t.appendChild(tbl);
   return t;
 }
 function renderBoards() {
-  const w = $("#boardWin").value, b = BOARDS[w], box = $("#boardsBody");
+  // fall back to any available window key (keeps boards working across a data-format change)
+  const b = BOARDS[$("#boardWin").value] || BOARDS[Object.keys(BOARDS)[0]] || {}, box = $("#boardsBody");
   box.innerHTML = "";
-  box.appendChild(board("Top killers", b.killers, "Kills"));
-  box.appendChild(board("Top chip bearers", b.bearers, "Held"));
-  box.appendChild(board("Most deaths", b.deaths, "Deaths"));
+  box.appendChild(board("Top killers", b.killers || [], "Kills"));
+  box.appendChild(board("Top chip bearers", b.bearers || [], "Held"));
+  box.appendChild(board("Most deaths", b.deaths || [], "Deaths"));
 }
 async function initBoards() {
   BOARDS = await getJSON("data/leaderboards.json");
@@ -143,6 +197,7 @@ async function initTrends() {
     $("#meta").innerHTML = `${meta.total_events.toLocaleString()} events · ${esc(meta.earliest)} → ${esc(meta.latest)}
       · <span title="when this snapshot was published">updated ${esc(meta.generated_at)}</span>`;
   } catch (e) { $("#meta").textContent = "Could not load data."; }
+  try { PLAYERS = await getJSON("data/players/index.json"); } catch (e) { PLAYERS = {}; }
   initPotm().catch(e => $("#potmBody").innerHTML = `<div class="loading">Error: ${esc(e.message)}</div>`);
   initBoards().catch(e => $("#boardsBody").innerHTML = `<div class="loading">Error: ${esc(e.message)}</div>`);
   // Trends (charts) init lazily on first tab open — see showTab().

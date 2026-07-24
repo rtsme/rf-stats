@@ -82,9 +82,37 @@ td.score{color:var(--gold);font-weight:700}
 .chartbox{position:relative;height:240px}
 canvas{max-width:100%}
 
+/* ── clickable player names ── */
+.pname.known{cursor:pointer;border-bottom:1px dotted var(--dim)}
+.pname.known:hover{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── player detail modal ── */
+.modal[hidden]{display:none}
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6)}
+.modal-card{position:relative;z-index:1;width:100%;max-width:560px;background:var(--panel);
+  border:1px solid var(--border);border-radius:14px;padding:22px 22px 18px}
+.modal-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--dim);
+  font-size:24px;line-height:1;cursor:pointer}
+.modal-close:hover{color:var(--text)}
+.phead{margin-bottom:14px}
+.pname-big{font-size:24px;font-weight:800}
+.dim{color:var(--dim)} .small{font-size:12px} .dim.small{margin-top:-6px;margin-bottom:10px}
+.pstats{display:flex;flex-wrap:wrap;gap:14px 22px;margin-bottom:12px}
+.pstat b{display:block;font-size:22px;font-weight:800}
+.pstat span{color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.pcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:8px 0 4px}
+.plist{list-style:none;margin:6px 0 14px;padding:0;font-size:14px}
+.plist li{padding:5px 0;border-bottom:1px solid var(--grid);display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.plist li.dim{border:none;justify-content:flex-start}
+.plist .x{color:var(--dim);font-variant-numeric:tabular-nums}
+.plist.recent li{display:block}
+.plist.recent code{color:var(--dim);margin-right:6px}
+
 @media (max-width:720px){
   .tiles{grid-template-columns:repeat(2,1fr)}
   .grid2{grid-template-columns:1fr}
   .spotlight .name{font-size:26px}
   .spotlight .score b{font-size:34px}
+  .pcols{grid-template-columns:1fr}
 }
