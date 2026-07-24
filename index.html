@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RF Activity — Stats</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <h1>◈ RF ACTIVITY</h1>
+    <span class="sub">Frontier — chip wars, PvP &amp; population</span>
+  </header>
+  <div class="meta" id="meta">loading…</div>
+
+  <nav class="tabs">
+    <button data-tab="potm" class="active">Player of the Month</button>
+    <button data-tab="boards">Leaderboards</button>
+    <button data-tab="trends">Trends</button>
+  </nav>
+
+  <section id="potm" class="active">
+    <div class="picker">
+      <span class="label">Month</span>
+      <select id="monthSel"></select>
+    </div>
+    <div id="potmBody"><div class="loading">loading…</div></div>
+  </section>
+
+  <section id="boards">
+    <div class="picker">
+      <span class="label">Window</span>
+      <select id="boardWin">
+        <option value="d30">Last 30 days</option>
+        <option value="all">All time</option>
+      </select>
+    </div>
+    <div class="grid2" id="boardsBody"><div class="loading">loading…</div></div>
+  </section>
+
+  <section id="trends">
+    <div class="panel" style="margin-bottom:16px">
+      <p class="card-title">Population</p>
+      <div class="popnow" id="popNow"></div>
+      <div class="chartbox"><canvas id="popChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <p class="card-title">Chip wins by race <span class="label">— weekly</span></p>
+      <div class="chartbox"><canvas id="cwChart"></canvas></div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body></html>

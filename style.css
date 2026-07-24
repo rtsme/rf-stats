@@ -1,0 +1,90 @@
+/* RF Activity dashboard — palette matches the Discord stat cards (charts.py) */
+:root{
+  --bg:#14100d; --panel:#1b1712; --panel2:#211a13; --text:#ede6da; --dim:#9a8a78;
+  --grid:#2a231c; --border:#4a3b2a; --gold:#e0a83e; --goldpanel:#2a2012;
+  --accretia:#d26050; --bellato:#5b8dd9; --cora:#8fc24a; --muted:#c9b48f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.4; -webkit-font-smoothing:antialiased;
+}
+a{color:var(--gold)}
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:6px}
+header.top h1{font-size:22px;margin:0;color:var(--gold);letter-spacing:.5px}
+header.top .sub{color:var(--dim);font-size:13px}
+.meta{color:var(--dim);font-size:12px;margin-bottom:18px}
+
+nav.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+nav.tabs button{
+  background:var(--panel);color:var(--dim);border:1px solid var(--border);
+  border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;
+}
+nav.tabs button:hover{color:var(--text)}
+nav.tabs button.active{color:var(--gold);border-color:var(--gold);background:var(--goldpanel)}
+
+section{display:none}
+section.active{display:block}
+
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}
+.label{color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+.row{display:flex;flex-wrap:wrap;gap:12px}
+.spacer{flex:1}
+
+/* ── POTM ── */
+.picker{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+select{
+  background:var(--panel);color:var(--text);border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;font-size:14px;font-weight:600;
+}
+.spotlight{
+  background:var(--goldpanel);border:2px solid var(--gold);border-radius:14px;
+  padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px;
+}
+.spotlight .crown{color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.8px}
+.spotlight .name{font-size:34px;font-weight:800;margin:2px 0 4px;line-height:1}
+.spotlight .who{font-weight:700;font-size:14px}
+.spotlight .score{margin-left:auto;text-align:right}
+.spotlight .score b{font-size:44px;color:var(--gold);font-weight:800;line-height:1;display:block}
+.spotlight .score span{color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.6px}
+
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 6px}
+.tile{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.tile .t{font-size:10px;font-weight:700;letter-spacing:.4px}
+.tile .n{font-size:26px;font-weight:800;margin:4px 0 2px}
+.tile .p{color:var(--dim);font-size:11px}
+.bonus{text-align:center;color:var(--gold);font-size:13px;font-weight:700;margin:8px 0 20px}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--grid)}
+th{color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+tbody tr:hover{background:var(--panel2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.rank{color:var(--dim);width:34px}
+td.score{color:var(--gold);font-weight:700}
+
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.Accretia{color:var(--accretia)} .Accretia .dot,.dot.Accretia{background:var(--accretia)}
+.Bellato{color:var(--bellato)}  .Bellato .dot,.dot.Bellato{background:var(--bellato)}
+.Cora{color:var(--cora)}        .Cora .dot,.dot.Cora{background:var(--cora)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card-title{font-size:15px;font-weight:700;margin:0 0 10px}
+.popnow{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px}
+.popnow .stat b{display:block;font-size:24px;font-weight:800}
+.popnow .stat span{color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+
+.loading{color:var(--dim);padding:30px;text-align:center}
+.chartbox{position:relative;height:240px}
+canvas{max-width:100%}
+
+@media (max-width:720px){
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .grid2{grid-template-columns:1fr}
+  .spotlight .name{font-size:26px}
+  .spotlight .score b{font-size:34px}
+}
