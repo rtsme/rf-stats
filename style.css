@@ -109,6 +109,29 @@ canvas{max-width:100%}
 .plist.recent li{display:block}
 .plist.recent code{color:var(--dim);margin-right:6px}
 
+/* ── achievement badges ── */
+.badges{margin:8px 0 14px}
+.bgroup{margin-bottom:10px}
+.bgroup .gname{color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px}
+.brow{display:flex;flex-wrap:wrap;gap:8px}
+.badge{background:var(--panel2);border:1px solid var(--border);border-left-width:3px;
+  border-radius:8px;padding:7px 10px;min-width:104px;cursor:help}
+.badge .bname{font-size:13px;font-weight:700;line-height:1.2}
+.badge .bmeta{color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums;margin-top:1px}
+.badge .pips{display:flex;gap:3px;margin-top:5px}
+.badge .pips i{width:12px;height:3px;border-radius:2px;background:var(--grid)}
+/* tier colours: bronze -> silver -> gold -> platinum */
+.badge.t1{border-left-color:#a9713f} .badge.t1 .bname{color:#c98a51} .badge.t1 .pips i.on{background:#a9713f}
+.badge.t2{border-left-color:#9fa8ad} .badge.t2 .bname{color:#c2cbd0} .badge.t2 .pips i.on{background:#9fa8ad}
+.badge.t3{border-left-color:var(--gold)} .badge.t3 .bname{color:var(--gold)} .badge.t3 .pips i.on{background:var(--gold)}
+.badge.t4{border-left-color:#7fd4e8;background:#1d2529} .badge.t4 .bname{color:#8fe0f4} .badge.t4 .pips i.on{background:#7fd4e8}
+
+.nextbs{margin:6px 0 14px;display:grid;gap:8px}
+.nextb{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:7px 10px}
+.nbtop{display:flex;justify-content:space-between;font-size:12px;font-weight:600;gap:8px}
+.nextb .bar{height:4px;background:var(--grid);border-radius:2px;margin-top:6px;overflow:hidden}
+.nextb .bar div{height:100%;background:var(--gold);opacity:.75}
+
 @media (max-width:720px){
   .tiles{grid-template-columns:repeat(2,1fr)}
   .grid2{grid-template-columns:1fr}

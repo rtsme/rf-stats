@@ -9,6 +9,9 @@ const fmt = n => (Math.round(n * 10) / 10).toLocaleString();
 const getJSON = u => fetch(u, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
 
 let PLAYERS = {};  // name(lower) -> slug, for players that have a detail page
+let ACH = { catalogue: [], rarity: {} };
+const TIER_CLASS = ["", "t1", "t2", "t3", "t4"];   // bronze → gold by tier index
+const fmtVal = (v, f) => f === "ratio" ? (Math.round(v * 100) / 100).toFixed(2) : Number(v).toLocaleString();
 
 function raceTag(race) {
   if (!race) return '<span style="color:var(--dim)">—</span>';
@@ -35,6 +38,46 @@ async function openPlayer(name) {
   }
 }
 const pstat = (label, val) => `<div class="pstat"><b>${esc(val)}</b><span>${esc(label)}</span></div>`;
+
+// earned badge: tier colour, value, rarity, and the next tier to chase
+function badgeHTML(b) {
+  const rar = ACH.rarity[`${b.id}:${b.tier}`];
+  const pips = Array.from({ length: b.tiers }, (_, i) =>
+    `<i class="${i < b.tier ? "on" : ""}"></i>`).join("");
+  const bits = [esc(b.desc) + ": " + fmtVal(b.value, b.fmt)];
+  if (rar) bits.push(`earned by ${rar} player${rar === 1 ? "" : "s"}`);
+  if (b.next_at) bits.push(`next tier at ${fmtVal(b.next_at, b.fmt)}`);
+  return `<div class="badge ${TIER_CLASS[b.tier] || "t1"}" title="${esc(bits.join(" · "))}">
+      <div class="bname">${esc(b.name)}</div>
+      <div class="bmeta">${fmtVal(b.value, b.fmt)}${rar ? ` · ${rar}` : ""}</div>
+      <div class="pips">${pips}</div>
+    </div>`;
+}
+// unearned: progress toward the first tier
+function nextHTML(n) {
+  return `<div class="nextb" title="${esc(n.desc)}">
+      <div class="nbtop"><span>${esc(n.name)}</span>
+        <span class="dim">${fmtVal(n.value, n.fmt)} / ${fmtVal(n.goal, n.fmt)}</span></div>
+      <div class="bar"><div style="width:${n.pct}%"></div></div>
+    </div>`;
+}
+function achSection(p) {
+  const badges = p.badges || [], next = p.next_badges || [];
+  if (!badges.length && !next.length) return "";
+  let h = "";
+  if (badges.length) {
+    const groups = {};
+    badges.forEach(b => (groups[b.group] = groups[b.group] || []).push(b));
+    h += `<div class="label">Achievements <span class="dim">— ${badges.length}</span></div>
+          <div class="badges">${Object.entries(groups).map(([g, list]) =>
+            `<div class="bgroup"><div class="gname">${esc(g)}</div>
+             <div class="brow">${list.map(badgeHTML).join("")}</div></div>`).join("")}</div>`;
+  }
+  if (next.length) {
+    h += `<div class="label">Working toward</div><div class="nextbs">${next.map(nextHTML).join("")}</div>`;
+  }
+  return h;
+}
 function renderPlayer(card, p) {
   const tags = p.char_class || "";  // race is already shown in the big name
   const list = (arr, key) => (arr && arr.length)
@@ -53,6 +96,7 @@ function renderPlayer(card, p) {
       ${p.avg_victim_level != null ? pstat("Avg victim lvl", p.avg_victim_level) : ""}
     </div>
     ${p.first_seen ? `<div class="dim small">First seen ${esc(p.first_seen)}</div>` : ""}
+    ${achSection(p)}
     <div class="pcols">
       <div><div class="label">Most killed</div><ul class="plist">${list(p.top_victims, "victim")}</ul></div>
       <div><div class="label">Killed most by</div><ul class="plist">${list(p.nemeses, "killer")}</ul></div>
@@ -198,6 +242,7 @@ async function initTrends() {
       · <span title="when this snapshot was published">updated ${esc(meta.generated_at)}</span>`;
   } catch (e) { $("#meta").textContent = "Could not load data."; }
   try { PLAYERS = await getJSON("data/players/index.json"); } catch (e) { PLAYERS = {}; }
+  try { ACH = await getJSON("data/achievements.json"); } catch (e) { /* badges just lose rarity */ }
   initPotm().catch(e => $("#potmBody").innerHTML = `<div class="loading">Error: ${esc(e.message)}</div>`);
   initBoards().catch(e => $("#boardsBody").innerHTML = `<div class="loading">Error: ${esc(e.message)}</div>`);
   // Trends (charts) init lazily on first tab open — see showTab().
