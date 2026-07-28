@@ -126,6 +126,26 @@ canvas{max-width:100%}
 .badge.t3{border-left-color:var(--gold)} .badge.t3 .bname{color:var(--gold)} .badge.t3 .pips i.on{background:var(--gold)}
 .badge.t4{border-left-color:#7fd4e8;background:#1d2529} .badge.t4 .bname{color:#8fe0f4} .badge.t4 .pips i.on{background:#7fd4e8}
 
+/* ── achievements catalogue page ── */
+.acards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.acard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}
+.ahead{margin-bottom:9px}
+.atitle{font-size:16px;font-weight:800;color:var(--gold)}
+.tiers{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.tchip{font-size:11px;padding:3px 7px;border-radius:999px;border:1px solid var(--border);
+  background:var(--panel2);cursor:help;white-space:nowrap}
+.tchip b{font-variant-numeric:tabular-nums;margin-left:2px}
+.tchip i{font-style:normal;color:var(--dim);margin-left:4px}
+.tchip.t1{border-color:#a9713f;color:#c98a51}
+.tchip.t2{border-color:#9fa8ad;color:#c2cbd0}
+.tchip.t3{border-color:var(--gold);color:var(--gold)}
+.tchip.t4{border-color:#7fd4e8;color:#8fe0f4}
+.atop{list-style:none;margin:0;padding:0;font-size:13px}
+.atop li{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid var(--grid)}
+.atop li:last-child{border-bottom:none}
+.atop .ar{color:var(--dim);width:16px;font-variant-numeric:tabular-nums;flex:none}
+.atop .av{margin-left:auto;color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums}
+
 .nextbs{margin:6px 0 14px;display:grid;gap:8px}
 .nextb{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:7px 10px}
 .nbtop{display:flex;justify-content:space-between;font-size:12px;font-weight:600;gap:8px}

@@ -114,7 +114,7 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => { if (e.key === "Escape") closePlayer(); });
 
 // ---------- tabs (charts built lazily so their canvas is visible when sized) ----------
-const TAB_INIT = { trends: initTrends };
+const TAB_INIT = { trends: initTrends, achv: async () => initAchv() };
 const tabDone = {};
 function showTab(name) {
   document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
@@ -192,6 +192,42 @@ async function initBoards() {
   BOARDS = await getJSON("data/leaderboards.json");
   $("#boardWin").addEventListener("change", renderBoards);
   renderBoards();
+}
+
+// ---------- Achievements catalogue ----------
+function initAchv() {
+  const box = $("#achvBody"), cat = ACH.catalogue || [], top = ACH.top || {};
+  if (!cat.length) {
+    box.innerHTML = '<div class="loading">No achievement data published yet.</div>';
+    return;
+  }
+  const tierCount = cat.reduce((n, a) => n + a.tiers.length, 0);
+  $("#achvMeta").innerHTML = `${cat.length} achievements · ${tierCount} tiers ·
+    hover a tier to see how many players have reached it`;
+
+  const groups = {};
+  cat.forEach(a => (groups[a.group] = groups[a.group] || []).push(a));
+  box.innerHTML = Object.entries(groups).map(([g, list]) => `
+    <div class="label" style="margin:14px 0 8px">${esc(g)}</div>
+    <div class="acards">${list.map(a => {
+      const rows = top[a.id] || [];
+      return `<div class="acard">
+        <div class="ahead">
+          <div class="atitle">${esc(a.tiers[a.tiers.length - 1].name)}</div>
+          <div class="dim small">${esc(a.desc)}</div>
+        </div>
+        <div class="tiers">${a.tiers.map((t, i) => {
+          const rar = ACH.rarity[`${a.id}:${i + 1}`] || 0;
+          return `<span class="tchip ${TIER_CLASS[i + 1] || "t1"}"
+            title="${esc(t.name)} — reach ${fmtVal(t.at, a.fmt)} · earned by ${rar} player${rar === 1 ? "" : "s"}">
+            ${esc(t.name)} <b>${fmtVal(t.at, a.fmt)}</b> <i>${rar}</i></span>`;
+        }).join("")}</div>
+        <ol class="atop">${rows.length ? rows.map((r, i) => `
+          <li><span class="ar">${i + 1}</span>${pName(r.name)}
+              <span class="av">${fmtVal(r.value, a.fmt)}</span></li>`).join("")
+          : '<li class="dim">Nobody yet.</li>'}</ol>
+      </div>`;
+    }).join("")}</div>`).join("");
 }
 
 // ---------- Trends (charts) ----------
