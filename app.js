@@ -3,6 +3,7 @@
 const RACES = ["Accretia", "Bellato", "Cora"];
 const RACE_COL = { Accretia: "#d26050", Bellato: "#5b8dd9", Cora: "#8fc24a" };
 const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const el = (t, cls, html) => { const e = document.createElement(t); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmt = n => (Math.round(n * 10) / 10).toLocaleString();
@@ -100,11 +101,20 @@ function raceTag(race) {
   if (!race) return '<span style="color:var(--dim)">—</span>';
   return `<span class="${race}"><span class="dot ${race}"></span>${esc(race)}</span>`;
 }
+// highest achievement tier a player holds — names are tinted by it (4 legendary, 3 gold)
+function bestTier(name) {
+  const row = SMAP[String(name || "").toLowerCase()];
+  const badges = row && row[7];
+  return badges && badges.length ? Math.max(...badges.map(b => b[1])) : 0;
+}
+const tierClassFor = name => ({ 4: " lgnd", 3: " gld" })[bestTier(name)] || "";
+
 // a player name; clickable if we have a detail page OR a search-index summary for them
 function pName(name) {
   const low = String(name || "").toLowerCase();
   const known = PLAYERS[low] || SMAP[low];
-  return `<span class="pname${known ? " known" : ""}"${known ? ` data-name="${esc(name)}"` : ""}>${esc(name)}</span>`;
+  return `<span class="pname${known ? " known" : ""}${tierClassFor(name)}"${
+    known ? ` data-name="${esc(name)}"` : ""}>${esc(name)}</span>`;
 }
 
 // ---------- player search ----------
@@ -128,7 +138,7 @@ function renderResults(rows) {
     box.innerHTML = '<div class="pr-empty">No player found.</div>';
   } else {
     box.innerHTML = rows.map(r => `<button class="pr" data-name="${esc(r[0])}">
-        <span class="pr-name">${esc(r[0])}</span>
+        <span class="pr-name${tierClassFor(r[0])}">${esc(r[0])}</span>
         <span class="pr-race ${RACE_OF[r[1]] || ""}">${r[1] ? `<span class="dot ${RACE_OF[r[1]]}"></span>${esc(RACE_OF[r[1]])}` : "—"}</span>
         <span class="pr-stat">${r[2].toLocaleString()}<i>kills</i></span>
         <span class="pr-stat">${fmtVal(r[4])}<i>K/D</i></span>
@@ -226,8 +236,9 @@ function badgeHTML(b) {
   const bits = [esc(b.desc) + ": " + fmtVal(b.value, b.fmt)];
   if (rar) bits.push(`earned by ${rar} player${rar === 1 ? "" : "s"}`);
   if (b.next_at) bits.push(`next tier at ${fmtVal(b.next_at, b.fmt)}`);
-  return `<div class="badge ${TIER_CLASS[b.tier] || "t1"}" title="${esc(bits.join(" · "))}">
-      <div class="bname">${esc(b.name)}</div>
+  return `<div class="badge ${TIER_CLASS[b.tier] || "t1"}" data-ach="${esc(b.id)}"
+      title="${esc(bits.join(" · "))} — click to see the leaderboard">
+      <div class="bname">${icon(b.id)}${esc(b.name)}</div>
       <div class="bmeta">${fmtVal(b.value, b.fmt)}${rar ? ` · ${rar}` : ""}</div>
       <div class="pips">${pips}</div>
     </div>`;
@@ -265,7 +276,7 @@ function renderPlayer(card, p) {
   card.innerHTML = `
     <button class="modal-close" aria-label="Close">×</button>
     <div class="phead">
-      <div class="pname-big">${raceTag(p.race)} ${esc(p.name)}</div>
+      <div class="pname-big">${raceTag(p.race)} <span class="${tierClassFor(p.name).trim()}">${esc(p.name)}</span></div>
       ${tags ? `<div class="dim">${esc(tags)}</div>` : ""}
     </div>
     <div class="pstats">
@@ -287,6 +298,15 @@ function renderPlayer(card, p) {
       : '<li class="dim">—</li>'}</ul>`;
 }
 document.addEventListener("click", e => {
+  const more = e.target.closest(".amore");          // expand / collapse a leaderboard
+  if (more) {
+    const card = more.closest(".acard"), id = card.dataset.ach;
+    const a = (ACH.catalogue || []).find(x => x.id === id);
+    card.outerHTML = achCardHTML(a, ACH.top || {}, !card.dataset.open);
+    return;
+  }
+  const jump = e.target.closest(".badge[data-ach]");  // badge -> its catalogue entry
+  if (jump) return gotoAchievement(jump.dataset.ach);
   const cb = e.target.closest(".aka-combine");
   if (cb) {
     const card = $("#playerCard");
@@ -394,7 +414,99 @@ async function initBoards() {
   renderBoards();
 }
 
+// ---------- achievement icons ----------
+// Inline SVG rather than emoji or an icon font: they inherit the tier colour via
+// currentColor, stay crisp at any size, and add nothing to the page's downloads.
+const ICONS = {
+  kills: '<path d="M12 3c-4.4 0-8 3.1-8 7 0 2.4 1.3 4.5 3.3 5.7V19a2 2 0 002 2h5.4a2 2 0 002-2v-3.3C18.7 14.5 20 12.4 20 10c0-3.9-3.6-7-8-7z"/><circle cx="9.2" cy="10" r="1.4" fill="currentColor" stroke="none"/><circle cx="14.8" cy="10" r="1.4" fill="currentColor" stroke="none"/>',
+  streak: '<path d="M13 2L5 14h6l-2 8 8-12h-6z"/>',
+  kd: '<circle cx="12" cy="12" r="7.5"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/>',
+  giant: '<path d="M6 15.5l6-6 6 6M6 9.5l6-6 6 6"/>',
+  nemesis: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/>',
+  bearer: '<rect x="7.5" y="7.5" width="9" height="9" rx="1.4"/><path d="M10 3.5v4M14 3.5v4M10 16.5v4M14 16.5v4M3.5 10h4M3.5 14h4M16.5 10h4M16.5 14h4"/>',
+  wars: '<path d="M12 3l8 3v6c0 4.4-3.2 8.3-8 9.5C7.2 20.3 4 16.4 4 12V6z"/>',
+  firstblood: '<path d="M12 3s6 6.5 6 10.5A6 6 0 0112 20a6 6 0 01-6-6.5C6 9.5 12 3 12 3z"/>',
+  lostwar: '<path d="M5.5 21V3.5M5.5 5h11l-2 3 2 3h-11"/>',
+  nuke: '<path d="M4 11a8 4.5 0 0116 0z"/><path d="M9 11.5v3.5c0 1.8 1.2 2.8 3 2.8s3-1 3-2.8V11.5"/><path d="M7.5 20.5h9"/>',
+  crowned: '<path d="M4 8.5l3 9h10l3-9-5 3-3-5.5-3 5.5z"/>',
+  w_staff: '<path d="M6.5 21L17 5.5"/><circle cx="18.2" cy="4" r="2.4"/>',
+  w_bow: '<path d="M6.5 3.5a13 13 0 010 17"/><path d="M6.5 12h12.5M15 8.2l4 3.8-4 3.8"/>',
+  w_launcher: '<rect x="3" y="9" width="13.5" height="6" rx="2"/><path d="M16.5 12h4.5M6.5 15v3.5"/>',
+  w_firearm: '<path d="M3 8.5h13v5h-3l-2 4H8l1-4H3z"/>',
+  w_mau: '<rect x="5" y="7.5" width="14" height="9.5" rx="2"/><path d="M9 12.5h6M12 3.5v4"/>',
+  w_spear: '<path d="M4 20L19.5 4.5"/><path d="M20 4l-1.2 5.2-4-4z"/>',
+  w_throw: '<path d="M12 2.5l2.8 6.7 6.7 2.8-6.7 2.8-2.8 6.7-2.8-6.7L2.5 12l6.7-2.8z"/>',
+  w_trap: '<path d="M4 9a8 8 0 0016 0"/><path d="M6.5 10l1 3M10 11.6l.6 3M14 11.6l-.6 3M17.5 10l-1 3"/>',
+  w_sword: '<path d="M6 18L17.5 6.5"/><path d="M14 4h6v6"/><path d="M3.5 16.5l4 4"/>',
+  w_axe: '<path d="M13.5 3a6.5 6.5 0 016.5 6.5l-6.5 2z"/><path d="M13 11.5L4 20.5"/>',
+  w_mace: '<path d="M4 20.5l7-7"/><circle cx="16" cy="8" r="3.8"/><path d="M16 2.2v2M16 11.8v2M10.2 8h2M19.8 8h2"/>',
+  w_knife: '<path d="M4.5 19.5l8.5-8.5"/><path d="M13 11l6.5-6.5 1 4.3-4.3 1z"/>',
+  w_animus: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2 2M16.8 16.8l2 2M18.8 5.2l-2 2M7.2 16.8l-2 2"/>',
+  w_tower: '<path d="M7 21V8l5-4 5 4v13z"/><path d="M7 8h10M10 21v-5h4v5"/>',
+};
+const icon = id => `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${
+  ICONS[id] || '<circle cx="12" cy="12" r="7.5"/>'}</svg>`;
+
 // ---------- Achievements catalogue ----------
+const ACH_SHOWN = 10;                 // rows per card before "show all"
+let achFilter = { q: "", group: "", sort: "default" };
+
+function achCardHTML(a, top, expanded) {
+  const rows = top[a.id] || [];
+  const shown = expanded ? rows : rows.slice(0, ACH_SHOWN);
+  const held = ACH.rarity[`${a.id}:1`] || 0;
+  return `<div class="acard" data-ach="${esc(a.id)}"${expanded ? ' data-open="1"' : ""}>
+    <div class="ahead">
+      <span class="aicon ${TIER_CLASS[4]}">${icon(a.id)}</span>
+      <div>
+        <div class="atitle">${esc(a.tiers[a.tiers.length - 1].name)}</div>
+        <div class="dim small">${esc(a.desc)}</div>
+      </div>
+    </div>
+    <div class="tiers">${a.tiers.map((t, i) => {
+      const rar = ACH.rarity[`${a.id}:${i + 1}`] || 0;
+      const pct = held ? Math.max(3, Math.round(100 * rar / held)) : 0;
+      return `<span class="tchip ${TIER_CLASS[i + 1] || "t1"}"
+        title="${esc(t.name)} — reach ${fmtVal(t.at, a.fmt)} · earned by ${rar} player${rar === 1 ? "" : "s"}">
+        <span class="tn">${esc(t.short || t.name)}</span><b>${fmtVal(t.at, a.fmt)}</b><i>${rar}</i>
+        <span class="tbar" style="width:${pct}%"></span></span>`;
+    }).join("")}</div>
+    <ol class="atop">${shown.length ? shown.map((r, i) => `
+      <li><span class="ar">${i + 1}</span>${pName(r.name)}
+          <span class="av">${fmtVal(r.value, a.fmt)}</span></li>`).join("")
+      : '<li class="dim">Nobody yet.</li>'}</ol>
+    ${rows.length > ACH_SHOWN
+      ? `<button class="amore">${expanded ? "Show less" : `Show all ${rows.length}`}</button>` : ""}
+  </div>`;
+}
+
+function renderAchCards() {
+  const cat = ACH.catalogue || [], top = ACH.top || {};
+  const q = achFilter.q.toLowerCase();
+  let list = cat.filter(a => {
+    if (achFilter.group && a.group !== achFilter.group) return false;
+    if (!q) return true;
+    return (a.desc + " " + a.tiers.map(t => t.name).join(" ")).toLowerCase().includes(q);
+  });
+  const rarity = a => ACH.rarity[`${a.id}:4`] || 0;
+  if (achFilter.sort === "rare") list = [...list].sort((x, y) => rarity(x) - rarity(y));
+  if (achFilter.sort === "common") list = [...list].sort((x, y) =>
+    (ACH.rarity[`${y.id}:1`] || 0) - (ACH.rarity[`${x.id}:1`] || 0));
+
+  const box = $("#achvCards");
+  if (!list.length) { box.innerHTML = '<div class="loading">Nothing matches that.</div>'; return; }
+  if (achFilter.sort === "default") {
+    const groups = {};
+    list.forEach(a => (groups[a.group] = groups[a.group] || []).push(a));
+    box.innerHTML = Object.entries(groups).map(([g, items]) => `
+      <div class="label ghead">${esc(g)}</div>
+      <div class="acards">${items.map(a => achCardHTML(a, top, false)).join("")}</div>`).join("");
+  } else {
+    box.innerHTML = `<div class="acards">${list.map(a => achCardHTML(a, top, false)).join("")}</div>`;
+  }
+}
+
 function initAchv() {
   const box = $("#achvBody"), cat = ACH.catalogue || [], top = ACH.top || {};
   if (!cat.length) {
@@ -413,34 +525,51 @@ function initAchv() {
       <ol class="rlist">${recent.map(r => `<li>
           <span class="rwhen">${esc(r.at.slice(0, 16))}</span>
           ${pName(r.player)}
-          <span class="rbadge ${TIER_CLASS[r.tier] || "t1"}">${esc(r.name)}</span>
+          <span class="rbadge ${TIER_CLASS[r.tier] || "t1"}">${icon(r.id)}${esc(r.name)}</span>
           <span class="rgroup">${esc(r.group)}</span>
         </li>`).join("")}</ol>
     </div>` : "";
 
-  const groups = {};
-  cat.forEach(a => (groups[a.group] = groups[a.group] || []).push(a));
-  box.innerHTML = recentHTML + Object.entries(groups).map(([g, list]) => `
-    <div class="label" style="margin:14px 0 8px">${esc(g)}</div>
-    <div class="acards">${list.map(a => {
-      const rows = top[a.id] || [];
-      return `<div class="acard">
-        <div class="ahead">
-          <div class="atitle">${esc(a.tiers[a.tiers.length - 1].name)}</div>
-          <div class="dim small">${esc(a.desc)}</div>
-        </div>
-        <div class="tiers">${a.tiers.map((t, i) => {
-          const rar = ACH.rarity[`${a.id}:${i + 1}`] || 0;
-          return `<span class="tchip ${TIER_CLASS[i + 1] || "t1"}"
-            title="${esc(t.name)} — reach ${fmtVal(t.at, a.fmt)} · earned by ${rar} player${rar === 1 ? "" : "s"}">
-            <span class="tn">${esc(t.short || t.name)}</span><b>${fmtVal(t.at, a.fmt)}</b><i>${rar}</i></span>`;
-        }).join("")}</div>
-        <ol class="atop">${rows.length ? rows.map((r, i) => `
-          <li><span class="ar">${i + 1}</span>${pName(r.name)}
-              <span class="av">${fmtVal(r.value, a.fmt)}</span></li>`).join("")
-          : '<li class="dim">Nobody yet.</li>'}</ol>
-      </div>`;
-    }).join("")}</div>`).join("");
+  const groupNames = [...new Set(cat.map(a => a.group))];
+  box.innerHTML = recentHTML + `
+    <div class="achbar">
+      <input id="achq" type="search" placeholder="Filter achievements…" autocomplete="off">
+      <div class="chips" id="achgroups">
+        <button class="fchip on" data-g="">All</button>
+        ${groupNames.map(g => `<button class="fchip" data-g="${esc(g)}">${esc(g)}</button>`).join("")}
+      </div>
+      <select id="achsort">
+        <option value="default">Grouped</option>
+        <option value="rare">Rarest first</option>
+        <option value="common">Most earned</option>
+      </select>
+    </div>
+    <div id="achvCards"></div>`;
+  renderAchCards();
+
+  $("#achq").addEventListener("input", e => { achFilter.q = e.target.value; renderAchCards(); });
+  $("#achsort").addEventListener("change", e => { achFilter.sort = e.target.value; renderAchCards(); });
+  $("#achgroups").addEventListener("click", e => {
+    const b = e.target.closest(".fchip");
+    if (!b) return;
+    achFilter.group = b.dataset.g;
+    $$(".fchip").forEach(x => x.classList.toggle("on", x === b));
+    renderAchCards();
+  });
+}
+
+// jump from a badge on a player card to that achievement in the catalogue
+function gotoAchievement(id) {
+  closePlayer();
+  achFilter = { q: "", group: "", sort: "default" };
+  showTab("achv");
+  setTimeout(() => {
+    const el = document.querySelector(`.acard[data-ach="${CSS.escape(id)}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("flash");
+    setTimeout(() => el.classList.remove("flash"), 1600);
+  }, 60);
 }
 
 // ---------- Trends (charts) ----------
