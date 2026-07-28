@@ -126,6 +126,14 @@ canvas{max-width:100%}
 .badge.t3{border-left-color:var(--gold)} .badge.t3 .bname{color:var(--gold)} .badge.t3 .pips i.on{background:var(--gold)}
 .badge.t4{border-left-color:#7fd4e8;background:#1d2529} .badge.t4 .bname{color:#8fe0f4} .badge.t4 .pips i.on{background:#7fd4e8}
 
+/* ── rank movement arrows ── */
+td.mvc{width:38px;padding-right:0}
+.mv{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;cursor:help}
+.mv.up{color:#8fc24a}
+.mv.dn{color:#d26050}
+.mv.same{color:var(--dim)}
+.mv.new{color:var(--bg);background:var(--gold);border-radius:4px;padding:1px 4px;font-size:9.5px;letter-spacing:.4px}
+
 /* ── achievements catalogue page ── */
 .acards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
 .acard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}

@@ -123,6 +123,15 @@ function showTab(name) {
 }
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
 
+// rank change since midnight (derived by re-scoring the month with an earlier cutoff)
+function moveHTML(m) {
+  if (!m) return "";
+  if (m.prev == null) return '<span class="mv new" title="new in the top 11 today">NEW</span>';
+  if (m.delta > 0) return `<span class="mv up" title="up ${m.delta} since midnight">▲${m.delta}</span>`;
+  if (m.delta < 0) return `<span class="mv dn" title="down ${-m.delta} since midnight">▼${-m.delta}</span>`;
+  return '<span class="mv same" title="unchanged since midnight">–</span>';
+}
+
 // ---------- Player of the Month ----------
 async function initPotm() {
   const idx = await getJSON("data/potm/index.json");
@@ -149,7 +158,7 @@ async function loadPotm(key) {
   body.innerHTML = `
     <div class="spotlight">
       <div>
-        <div class="crown">★ CROWNED${wr ? ` · winning race ${esc(wr)}` : ""}</div>
+        <div class="crown">★ CROWNED${wr ? ` · winning race ${esc(wr)}` : ""} ${moveHTML(w.move)}</div>
         <div class="name">${pName(w.name)}</div>
         <div class="who ${w.race || ""}">${raceTag(w.race)}<span style="color:var(--dim);font-weight:600">${warsSub}</span></div>
       </div>
@@ -159,12 +168,14 @@ async function loadPotm(key) {
     <div class="tiles">${tiles.map(([t, n, p, c]) =>
       `<div class="tile"><div class="t" style="color:${c}">${t}</div><div class="n">${n}</div><div class="p">+${fmt(p)} pts</div></div>`).join("")}</div>
     <div class="bonus">★ hardship bonus +${fmt(w.hardship_bonus)} pts</div>
-    <div class="label" style="margin-bottom:8px">Runners-up</div>
-    <table><thead><tr><th></th><th>Player</th><th>Race</th><th class="num">Wars fought</th><th class="num">Score</th></tr></thead>
+    <div class="label" style="margin-bottom:8px">Runners-up${s.move_since
+      ? ' <span class="dim" style="font-weight:400;text-transform:none">— ▲▼ change since midnight</span>' : ""}</div>
+    <table><thead><tr><th></th><th></th><th>Player</th><th>Race</th><th class="num">Wars fought</th><th class="num">Score</th></tr></thead>
       <tbody>${s.runners.map((r, i) =>
-        `<tr><td class="rank">${i + 2}</td><td>${pName(r.name)}</td><td>${raceTag(r.race)}</td>
+        `<tr><td class="rank">${i + 2}</td><td class="mvc">${moveHTML(r.move)}</td>
+         <td>${pName(r.name)}</td><td>${raceTag(r.race)}</td>
          <td class="num">${r.wars_fought}</td><td class="num score">${fmt(r.score)}</td></tr>`).join("")
-      || '<tr><td colspan="5" class="loading">No other ranked players.</td></tr>'}</tbody></table>`;
+      || '<tr><td colspan="6" class="loading">No other ranked players.</td></tr>'}</tbody></table>`;
 }
 
 // ---------- Leaderboards ----------
