@@ -32,14 +32,14 @@ function akaHTML(name) {
     </div>`;
 }
 function akaDialog(name) {
-  const cmd = `/aka request character: ${name} also: OtherCharacter`;
+  const cmd = `/aka request character: ${name},OtherCharacter`;
   const card = $("#playerCard");
   card.insertAdjacentHTML("beforeend", `
     <div class="aka-help" id="akaHelp">
       <b>Link ${esc(name)} to another character</b>
       <p>Alt characters are linked by hand after a moderator checks them, so the request goes
          through the Discord bot. Run this on a Discord with BunnyBot, replacing
-         <code>OtherCharacter</code> with your other character — or several, separated by commas:</p>
+         <code>OtherCharacter</code> with your other character — add more separated by commas:</p>
       <code id="akaCmd">${esc(cmd)}</code>
       <button class="aka-copy" id="akaCopy">Copy command</button>
       <p class="dim">A moderator approves it, and the link then shows here. Linking is for display
