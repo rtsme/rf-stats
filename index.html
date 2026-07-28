@@ -62,6 +62,42 @@
       <div class="chartbox"><canvas id="cwChart"></canvas></div>
     </div>
   </section>
+
+  <footer class="addbot">
+    <div class="label">Add BunnyBot to your Discord</div>
+    <div class="botcards">
+      <div class="botcard">
+        <div class="bt">📊 Stats only</div>
+        <p>Slash commands for looking things up — <code>/player</code>, <code>/leaderboard</code>,
+           <code>/potm</code>, <code>/monthly</code>, <code>/chipwar</code>. It only answers when
+           asked, posts nothing on its own and needs no permissions.</p>
+        <a class="btn" href="https://discord.com/oauth2/authorize?client_id=1529490210021441586"
+           target="_blank" rel="noopener">Add the app</a>
+        <div class="steps"><b>After adding</b> just type <code>/</code> in any channel and pick a
+          command. Nothing else to set up.</div>
+      </div>
+      <div class="botcard full">
+        <div class="bt">🤖 Full bot</div>
+        <p>Everything above, plus live announcements — kills, new chip bearers, boss respawn
+           timers and achievement unlocks — and chip-war voice lines played into a voice channel.
+           Several settings let you tune what it does.</p>
+        <a class="btn gold" href="https://discord.com/oauth2/authorize?client_id=1529490210021441586&amp;permissions=3263488&amp;integration_type=0&amp;scope=bot+applications.commands"
+           target="_blank" rel="noopener">Add the bot</a>
+        <div class="steps"><b>After adding</b>, run these in your server:
+          <ol>
+            <li><code>/alerts channel #channel</code> — where activity alerts go</li>
+            <li><code>/alerts enable</code> — pick what to announce (kills, chip bearer,
+                bosses, achievements)</li>
+            <li><code>/alerts channel #channel feed:Achievement unlocks</code> — optional, sends
+                achievements somewhere separate</li>
+            <li><code>/soundalerts channel #voice</code> then <code>/soundalerts on</code> —
+                optional voice lines during chip wars</li>
+          </ol>
+          <code>/alerts show</code> displays the current setup. You'll need Manage&nbsp;Server to
+          change these.</div>
+      </div>
+    </div>
+  </footer>
 </div>
 
 <div id="playerModal" class="modal" hidden>

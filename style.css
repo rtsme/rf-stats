@@ -236,6 +236,27 @@ canvas{max-width:100%}
 .pr-badges{flex:none;color:var(--gold);font-size:11px;font-weight:700}
 .pr-empty{padding:12px;color:var(--dim);font-size:13px;text-align:center}
 
+/* ── add-the-bot footer ── */
+.addbot{margin:34px 0 10px;padding-top:20px;border-top:1px solid var(--grid)}
+.botcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:10px}
+.botcard{background:rgba(27,23,18,.86);border:1px solid var(--border);border-radius:12px;padding:16px}
+.botcard.full{border-color:rgba(224,168,62,.55)}
+.bt{font-size:15px;font-weight:800;color:var(--gold);margin-bottom:6px}
+.botcard p{margin:0 0 12px;font-size:13px;line-height:1.55;color:var(--text)}
+.btn{display:inline-block;background:var(--panel2);color:var(--text);border:1px solid var(--border);
+  border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;text-decoration:none;
+  transition:border-color .15s,background .15s,color .15s}
+.btn:hover{border-color:var(--gold);color:var(--gold)}
+.btn.gold{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.btn.gold:hover{background:#f0bd5c;color:var(--bg)}
+.steps{margin-top:12px;padding-top:11px;border-top:1px solid var(--grid);
+  color:var(--dim);font-size:12px;line-height:1.6}
+.steps b{color:var(--muted)}
+.steps ol{margin:6px 0 6px;padding-left:20px}
+.steps li{margin:3px 0}
+.steps code,.botcard p code{background:var(--bg);border:1px solid var(--border);border-radius:5px;
+  padding:1px 5px;font-size:11.5px;color:var(--text)}
+
 /* ── monthly report (the /monthly command, on the site) ── */
 .mhead{margin:26px 0 8px}
 .mhead.first{margin-top:0}

@@ -468,6 +468,8 @@ const ICONS = {
   kd: '<circle cx="12" cy="12" r="7.5"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/>',
   giant: '<path d="M6 15.5l6-6 6 6M6 9.5l6-6 6 6"/>',
   nemesis: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/>',
+  deaths: '<path d="M6.5 21V10.5a5.5 5.5 0 1111 0V21z"/><path d="M4 21h16M12 9.5v5M9.5 12h5"/>',
+  trapdeaths: '<path d="M4 9a8 8 0 0016 0"/><path d="M6.5 10l1 3M10 11.6l.6 3M14 11.6l-.6 3M17.5 10l-1 3"/>',
   bearer: '<rect x="7.5" y="7.5" width="9" height="9" rx="1.4"/><path d="M10 3.5v4M14 3.5v4M10 16.5v4M14 16.5v4M3.5 10h4M3.5 14h4M16.5 10h4M16.5 14h4"/>',
   wars: '<path d="M12 3l8 3v6c0 4.4-3.2 8.3-8 9.5C7.2 20.3 4 16.4 4 12V6z"/>',
   firstblood: '<path d="M12 3s6 6.5 6 10.5A6 6 0 0112 20a6 6 0 01-6-6.5C6 9.5 12 3 12 3z"/>',
