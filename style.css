@@ -78,6 +78,7 @@ td.score{color:var(--gold);font-weight:700}
 .popnow .stat b{display:block;font-size:24px;font-weight:800}
 .popnow .stat span{color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
 
+#popSince{margin:-4px 0 10px}
 .loading{color:var(--dim);padding:30px;text-align:center}
 .chartbox{position:relative;height:240px}
 canvas{max-width:100%}

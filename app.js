@@ -401,6 +401,10 @@ async function initTrends() {
     ["Online", s.total_online, "var(--text)"], ["Accretia", s.pop_accretia, "var(--accretia)"],
     ["Bellato", s.pop_bellato, "var(--bellato)"], ["Cora", s.pop_cora, "var(--cora)"],
   ].map(([k, v, c]) => `<div class="stat"><b style="color:${c}">${v ?? "—"}</b><span>${k}</span></div>`).join("");
+  if (pop.since) {
+    const [y, m, d] = pop.since.slice(0, 10).split("-");
+    $("#popSince").textContent = `This data is only available from ${d}-${m}-${y}`;
+  }
 
   const px = pop.series.map(r => r.taken_at.slice(5, 16));
   new Chart($("#popChart"), {
