@@ -12,6 +12,48 @@ let PLAYERS = {};  // name(lower) -> slug, for players that have a detail page
 let SMAP = {};     // name(lower) -> summary row, for EVERY player ever seen (search index)
 let SEARCH = [];   // the same rows, for scanning
 let DETAIL_RULE = { min_kills: 100, active_days: 90 };   // replaced by the published values
+let AKA = { groups: [], of: {} };   // approved alt-character links (display only)
+
+// other characters known to be the same player
+function akaFor(name) {
+  const gi = AKA.of[String(name || "").toLowerCase()];
+  if (gi == null) return [];
+  return (AKA.groups[gi] || []).filter(n => n.toLowerCase() !== String(name).toLowerCase());
+}
+// "Also known as" block + the button explaining how to submit a link
+function akaHTML(name) {
+  const others = akaFor(name);
+  return `<div class="aka">
+      <span class="label" style="display:inline">Also known as</span>
+      ${others.length
+        ? `<span class="aka-names">${others.map(pName).join("")}</span>`
+        : '<span class="dim">— none recorded</span>'}
+      <button class="aka-btn" data-aka="${esc(name)}">+ Link characters</button>
+    </div>`;
+}
+function akaDialog(name) {
+  const cmd = `/aka request characters: ${name}, OtherCharacter`;
+  const card = $("#playerCard");
+  card.insertAdjacentHTML("beforeend", `
+    <div class="aka-help" id="akaHelp">
+      <b>Link ${esc(name)} to another character</b>
+      <p>Alt characters are linked by hand after a moderator checks them, so the request goes
+         through the Discord bot. Run this on a Discord with BunnyBot, listing every character
+         that belongs to the same player:</p>
+      <code id="akaCmd">${esc(cmd)}</code>
+      <button class="aka-copy" id="akaCopy">Copy command</button>
+      <p class="dim">A moderator approves it, and the link then shows here. Linking is for display
+         only — kills, K/D and achievements stay separate per character. Ask a moderator to run
+         <code>/aka remove</code> if you want a link undone.</p>
+    </div>`);
+  $("#akaHelp").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  $("#akaCopy").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(cmd);
+      $("#akaCopy").textContent = "Copied ✓";
+    } catch (e) { $("#akaCopy").textContent = "Select the text above to copy"; }
+  });
+}
 let ACH = { catalogue: [], rarity: {} };
 const TIER_CLASS = ["", "t1", "t2", "t3", "t4"];   // bronze → gold by tier index
 const fmtVal = (v, f) => f === "ratio" ? (Math.round(v * 100) / 100).toFixed(2) : Number(v).toLocaleString();
@@ -117,6 +159,7 @@ function renderPlayerLite(card, r) {
       ${kdStat(kd, kdnt)}${pstat("Chip wars", wars.toLocaleString())}
       ${bearer ? pstat("Chip bearer", "×" + bearer) : ""}
     </div>
+    ${akaHTML(name)}
     ${bl.length ? `<div class="label">Achievements <span class="dim">— ${bl.length}</span></div>
       <div class="badges"><div class="brow">${bl.map(b =>
         `<div class="badge ${TIER_CLASS[b.tier] || "t1"}" title="${esc(b.desc)} · ${esc(b.name)}">
@@ -194,6 +237,7 @@ function renderPlayer(card, p) {
       ${p.avg_victim_level != null ? pstat("Avg victim lvl", p.avg_victim_level) : ""}
     </div>
     ${p.first_seen ? `<div class="dim small">First seen ${esc(p.first_seen)}</div>` : ""}
+    ${akaHTML(p.name)}
     ${achSection(p)}
     <div class="pcols">
       <div><div class="label">Most killed</div><ul class="plist">${list(p.top_victims, "victim")}</ul></div>
@@ -205,6 +249,8 @@ function renderPlayer(card, p) {
       : '<li class="dim">—</li>'}</ul>`;
 }
 document.addEventListener("click", e => {
+  const ab = e.target.closest(".aka-btn");
+  if (ab) { if (!$("#akaHelp")) akaDialog(ab.dataset.aka); return; }
   const pn = e.target.closest(".pname.known");
   if (pn) return openPlayer(pn.dataset.name);
   if (e.target.closest(".modal-close") || e.target.classList.contains("modal-bg")) closePlayer();
@@ -388,6 +434,7 @@ async function initTrends() {
   } catch (e) { $("#meta").textContent = "Could not load data."; }
   try { PLAYERS = await getJSON("data/players/index.json"); } catch (e) { PLAYERS = {}; }
   try { ACH = await getJSON("data/achievements.json"); } catch (e) { /* badges just lose rarity */ }
+  try { AKA = await getJSON("data/aka.json"); } catch (e) { /* no links published yet */ }
   try {
     const si = await getJSON("data/players/search.json");
     SEARCH = si.players || [];
