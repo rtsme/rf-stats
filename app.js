@@ -102,7 +102,7 @@ async function openPlayer(name) {
 
 // summary card built from the search index (no per-player page for this player)
 function renderPlayerLite(card, r) {
-  const [name, race, kills, deaths, kd, wars, bearer, badges] = r;
+  const [name, race, kills, deaths, kd, wars, bearer, badges, kdnt] = r;
   const full = RACE_OF[race] || null;
   const bl = badges.map(([id, tier]) => {
     const a = (ACH.catalogue || []).find(x => x.id === id);
@@ -114,7 +114,7 @@ function renderPlayerLite(card, r) {
     <div class="phead"><div class="pname-big">${raceTag(full)} ${esc(name)}</div></div>
     <div class="pstats">
       ${pstat("Kills", kills.toLocaleString())}${pstat("Deaths", deaths.toLocaleString())}
-      ${pstat("K/D", fmtVal(kd))}${pstat("Chip wars", wars.toLocaleString())}
+      ${kdStat(kd, kdnt)}${pstat("Chip wars", wars.toLocaleString())}
       ${bearer ? pstat("Chip bearer", "×" + bearer) : ""}
     </div>
     ${bl.length ? `<div class="label">Achievements <span class="dim">— ${bl.length}</span></div>
@@ -131,7 +131,11 @@ function renderPlayerLite(card, r) {
       so their detail page isn't regenerated each update.
     </div>`;
 }
-const pstat = (label, val) => `<div class="pstat"><b>${esc(val)}</b><span>${esc(label)}</span></div>`;
+const pstat = (label, val, sub) => `<div class="pstat"><b>${esc(val)}</b><span>${esc(label)}</span>${
+  sub ? `<em>${esc(sub)}</em>` : ""}</div>`;
+// K/D tile: the badge is judged on the trap-free figure, so show it when it differs
+const kdStat = (kd, kdnt) => pstat("K/D", fmtVal(kd),
+  (kdnt != null && kdnt !== kd) ? `${fmtVal(kdnt)} excl. traps` : null);
 
 // earned badge: tier colour, value, rarity, and the next tier to chase
 function badgeHTML(b) {
@@ -184,7 +188,7 @@ function renderPlayer(card, p) {
       ${tags ? `<div class="dim">${esc(tags)}</div>` : ""}
     </div>
     <div class="pstats">
-      ${pstat("Kills", p.kills)}${pstat("Deaths", p.deaths)}${pstat("K/D", fmt(p.kd))}
+      ${pstat("Kills", p.kills)}${pstat("Deaths", p.deaths)}${kdStat(p.kd, p.kd_notrap)}
       ${p.chip_bearer_count ? pstat("Chip bearer", "×" + p.chip_bearer_count) : ""}
       ${p.weapon ? pstat("Top weapon", p.weapon) : ""}
       ${p.avg_victim_level != null ? pstat("Avg victim lvl", p.avg_victim_level) : ""}
