@@ -185,11 +185,13 @@ td.mvc{width:38px;padding-right:0}
 .acard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}
 .ahead{margin-bottom:9px}
 .atitle{font-size:16px;font-weight:800;color:var(--gold)}
-.tiers{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
-.tchip{font-size:11px;padding:3px 7px;border-radius:999px;border:1px solid var(--border);
-  background:var(--panel2);cursor:help;white-space:nowrap}
-.tchip b{font-variant-numeric:tabular-nums;margin-left:2px}
-.tchip i{font-style:normal;color:var(--dim);margin-left:4px}
+/* fixed 2x2 so long ladders (Launcher Master 2,000) can't wrap raggedly */
+.tiers{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.tchip{display:flex;align-items:baseline;gap:4px;min-width:0;font-size:11px;padding:3px 8px;
+  border-radius:999px;border:1px solid var(--border);background:var(--panel2);cursor:help}
+.tchip .tn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tchip b{font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
+.tchip i{font-style:normal;color:var(--dim);white-space:nowrap}
 .tchip.t1{border-color:#a9713f;color:#c98a51}
 .tchip.t2{border-color:#9fa8ad;color:#c2cbd0}
 .tchip.t3{border-color:var(--gold);color:var(--gold)}

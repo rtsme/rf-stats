@@ -376,7 +376,7 @@ function initAchv() {
           const rar = ACH.rarity[`${a.id}:${i + 1}`] || 0;
           return `<span class="tchip ${TIER_CLASS[i + 1] || "t1"}"
             title="${esc(t.name)} — reach ${fmtVal(t.at, a.fmt)} · earned by ${rar} player${rar === 1 ? "" : "s"}">
-            ${esc(t.name)} <b>${fmtVal(t.at, a.fmt)}</b> <i>${rar}</i></span>`;
+            <span class="tn">${esc(t.short || t.name)}</span><b>${fmtVal(t.at, a.fmt)}</b><i>${rar}</i></span>`;
         }).join("")}</div>
         <ol class="atop">${rows.length ? rows.map((r, i) => `
           <li><span class="ar">${i + 1}</span>${pName(r.name)}
