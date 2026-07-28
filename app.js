@@ -302,7 +302,8 @@ async function loadPotm(key) {
   body.innerHTML = `
     <div class="spotlight">
       <div>
-        <div class="crown">★ CROWNED${wr ? ` · winning race ${esc(wr)}` : ""} ${moveHTML(w.move)}</div>
+        <div class="crown">${s.in_progress ? "◆ CURRENT LEADER" : "★ CROWNED"}${
+          wr ? ` · winning race ${esc(wr)}` : ""} ${moveHTML(w.move)}</div>
         <div class="name">${pName(w.name)}</div>
         <div class="who ${w.race || ""}">${raceTag(w.race)}<span style="color:var(--dim);font-weight:600">${warsSub}</span></div>
       </div>
