@@ -9,6 +9,9 @@ const fmt = n => (Math.round(n * 10) / 10).toLocaleString();
 const getJSON = u => fetch(u, { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
 
 let PLAYERS = {};  // name(lower) -> slug, for players that have a detail page
+let SMAP = {};     // name(lower) -> summary row, for EVERY player ever seen (search index)
+let SEARCH = [];   // the same rows, for scanning
+let DETAIL_RULE = { min_kills: 100, active_days: 90 };   // replaced by the published values
 let ACH = { catalogue: [], rarity: {} };
 const TIER_CLASS = ["", "t1", "t2", "t3", "t4"];   // bronze → gold by tier index
 const fmtVal = (v, f) => f === "ratio" ? (Math.round(v * 100) / 100).toFixed(2) : Number(v).toLocaleString();
@@ -17,25 +20,116 @@ function raceTag(race) {
   if (!race) return '<span style="color:var(--dim)">—</span>';
   return `<span class="${race}"><span class="dot ${race}"></span>${esc(race)}</span>`;
 }
-// a player name; clickable (opens detail) only if we published a page for them
+// a player name; clickable if we have a detail page OR a search-index summary for them
 function pName(name) {
-  const known = PLAYERS[String(name || "").toLowerCase()];
+  const low = String(name || "").toLowerCase();
+  const known = PLAYERS[low] || SMAP[low];
   return `<span class="pname${known ? " known" : ""}"${known ? ` data-name="${esc(name)}"` : ""}>${esc(name)}</span>`;
+}
+
+// ---------- player search ----------
+const RACE_OF = { A: "Accretia", B: "Bellato", C: "Cora" };
+function searchPlayers(q, limit = 25) {
+  q = q.trim().toLowerCase();
+  if (!q) return [];
+  const hits = [];
+  for (const r of SEARCH) {
+    const n = r[0].toLowerCase();
+    const at = n.indexOf(q);
+    if (at < 0) continue;
+    hits.push([n === q ? 0 : (at === 0 ? 1 : 2), -r[2], r]);   // exact, then prefix, then kills
+  }
+  hits.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  return hits.slice(0, limit).map(h => h[2]);
+}
+function renderResults(rows) {
+  const box = $("#presults");
+  if (!rows.length) {
+    box.innerHTML = '<div class="pr-empty">No player found.</div>';
+  } else {
+    box.innerHTML = rows.map(r => `<button class="pr" data-name="${esc(r[0])}">
+        <span class="pr-name">${esc(r[0])}</span>
+        <span class="pr-race ${RACE_OF[r[1]] || ""}">${r[1] ? `<span class="dot ${RACE_OF[r[1]]}"></span>${esc(RACE_OF[r[1]])}` : "—"}</span>
+        <span class="pr-stat">${r[2].toLocaleString()}<i>kills</i></span>
+        <span class="pr-stat">${fmtVal(r[4])}<i>K/D</i></span>
+        ${r[7].length ? `<span class="pr-badges">${r[7].length}★</span>` : ""}
+      </button>`).join("");
+  }
+  box.hidden = false;
+}
+function initSearch() {
+  const input = $("#psearch"), box = $("#presults");
+  const run = () => {
+    const q = input.value;
+    if (!q.trim()) { box.hidden = true; return; }
+    renderResults(searchPlayers(q));
+  };
+  input.addEventListener("input", run);
+  input.addEventListener("focus", run);
+  input.addEventListener("keydown", e => {
+    if (e.key === "Escape") { box.hidden = true; input.blur(); }
+    if (e.key === "Enter") {
+      const first = box.querySelector(".pr");
+      if (first) { openPlayer(first.dataset.name); box.hidden = true; }
+    }
+  });
+  box.addEventListener("click", e => {
+    const b = e.target.closest(".pr");
+    if (b) { openPlayer(b.dataset.name); box.hidden = true; }
+  });
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".searchbar")) box.hidden = true;
+  });
 }
 
 // ---------- player detail modal ----------
 function closePlayer() { $("#playerModal").hidden = true; }
 async function openPlayer(name) {
-  const slug = PLAYERS[String(name || "").toLowerCase()];
-  if (!slug) return;
+  const low = String(name || "").toLowerCase();
+  const slug = PLAYERS[low], summary = SMAP[low];
+  if (!slug && !summary) return;
   const card = $("#playerCard");
   card.innerHTML = '<div class="loading">loading…</div>';
   $("#playerModal").hidden = false;
+  if (!slug) return renderPlayerLite(card, summary);   // findable, but no full page published
   try {
     renderPlayer(card, await getJSON(`data/players/${slug}.json`));
   } catch (e) {
+    if (summary) return renderPlayerLite(card, summary);
     card.innerHTML = `<button class="modal-close">×</button><div class="loading">Couldn't load ${esc(name)}.</div>`;
   }
+}
+
+// summary card built from the search index (no per-player page for this player)
+function renderPlayerLite(card, r) {
+  const [name, race, kills, deaths, kd, wars, bearer, badges] = r;
+  const full = RACE_OF[race] || null;
+  const bl = badges.map(([id, tier]) => {
+    const a = (ACH.catalogue || []).find(x => x.id === id);
+    return a ? { id, tier, tiers: a.tiers.length, name: a.tiers[tier - 1].name, group: a.group,
+                 desc: a.desc, fmt: a.fmt, value: null, at: a.tiers[tier - 1].at, next_at: null } : null;
+  }).filter(Boolean);
+  card.innerHTML = `
+    <button class="modal-close" aria-label="Close">×</button>
+    <div class="phead"><div class="pname-big">${raceTag(full)} ${esc(name)}</div></div>
+    <div class="pstats">
+      ${pstat("Kills", kills.toLocaleString())}${pstat("Deaths", deaths.toLocaleString())}
+      ${pstat("K/D", fmtVal(kd))}${pstat("Chip wars", wars.toLocaleString())}
+      ${bearer ? pstat("Chip bearer", "×" + bearer) : ""}
+    </div>
+    ${bl.length ? `<div class="label">Achievements <span class="dim">— ${bl.length}</span></div>
+      <div class="badges"><div class="brow">${bl.map(b =>
+        `<div class="badge ${TIER_CLASS[b.tier] || "t1"}" title="${esc(b.desc)} · ${esc(b.name)}">
+           <div class="bname">${esc(b.name)}</div><div class="bmeta">${esc(b.group)}</div></div>`).join("")}</div></div>` : ""}
+    <div class="lite-note">
+      <b>Summary view.</b> The totals and achievements above cover this player's entire
+      recorded history — nothing is missing from them.
+      <br>Detailed pages — favourite targets, nemeses and recent fights — are kept for players
+      with <b>${DETAIL_RULE.min_kills}+ kills</b> who have fought in the
+      <b>last ${DETAIL_RULE.active_days} days</b>, plus anyone currently in a leaderboard,
+      Player of the Month podium or achievement top 10. This player doesn't meet that yet,
+      so their detail page isn't regenerated each update.
+    </div>`;
 }
 const pstat = (label, val) => `<div class="pstat"><b>${esc(val)}</b><span>${esc(label)}</span></div>`;
 
@@ -290,6 +384,16 @@ async function initTrends() {
   } catch (e) { $("#meta").textContent = "Could not load data."; }
   try { PLAYERS = await getJSON("data/players/index.json"); } catch (e) { PLAYERS = {}; }
   try { ACH = await getJSON("data/achievements.json"); } catch (e) { /* badges just lose rarity */ }
+  try {
+    const si = await getJSON("data/players/search.json");
+    SEARCH = si.players || [];
+    if (si.detail_rule) DETAIL_RULE = si.detail_rule;
+    SEARCH.forEach(r => { SMAP[r[0].toLowerCase()] = r; });
+    initSearch();
+  } catch (e) {
+    $("#psearch").placeholder = "Player search unavailable";
+    $("#psearch").disabled = true;
+  }
   initPotm().catch(e => $("#potmBody").innerHTML = `<div class="loading">Error: ${esc(e.message)}</div>`);
   initBoards().catch(e => $("#boardsBody").innerHTML = `<div class="loading">Error: ${esc(e.message)}</div>`);
   // Trends (charts) init lazily on first tab open — see showTab().
