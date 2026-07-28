@@ -340,6 +340,47 @@ function moveHTML(m) {
   return '<span class="mv same" title="unchanged since midnight">–</span>';
 }
 
+// ---------- the /monthly report, rendered for the site ----------
+function monthlyHTML(mo, inProgress) {
+  if (!mo) return "";
+  const races = ["Accretia", "Bellato", "Cora"];
+  const nameRace = t => t ? `${pName(t[0])}<span class="mv-c">×${t[1].toLocaleString()}</span>` : '<span class="dim">—</span>';
+  const awards = [
+    ["★ Top killer", mo.top_killer, "total kills"],
+    ["⚔ Friendly fire", mo.friendly_fire, "same-race kills"],
+    ["● Lowbie killer", mo.lowbie_killer, "kills of lvl ≤ 50"],
+    ["◎ Trap magnet", mo.trap_magnet, "deaths to traps"],
+  ];
+  return `
+    <div class="label mhead">Monthly report${inProgress
+      ? ' <span class="dim" style="font-weight:400;text-transform:none">— month still running</span>' : ""}</div>
+    <div class="panel mpanel">
+      <div class="mtop">
+        <div><span class="label">Winning race</span><span class="dim"> · chip-war wins</span></div>
+        <div class="mkills">${(mo.total_kills || 0).toLocaleString()}<span>kills this month</span></div>
+      </div>
+      <div class="mraces">${races.map(r => {
+        const win = r === mo.winning_race;
+        return `<div class="mrace ${r}${win ? " win" : ""}">
+          ${win ? '<div class="mwin">★ WINNER</div>' : ""}
+          <div class="mrname">${raceTag(r)}</div>
+          <div class="mrn">${mo.race_wins[r] || 0}</div>
+          <ol class="mbear">${(mo.top_bearers[r] || []).map(([n, c]) =>
+            `<li>${pName(n)}<span class="x">×${c}</span></li>`).join("")
+            || '<li class="dim">—</li>'}</ol>
+        </div>`;
+      }).join("")}</div>
+      <div class="label" style="margin:14px 0 8px">Awards</div>
+      <div class="mawards">${awards.map(([title, list, sub]) => `
+        <div class="maward">
+          <div class="mat">${esc(title)}</div>
+          <div class="maw">${nameRace((list || [])[0])}</div>
+          <div class="masub">${esc(sub)}</div>
+          ${(list || [])[1] ? `<div class="marun">runner-up ${nameRace(list[1])}</div>` : ""}
+        </div>`).join("")}</div>
+    </div>`;
+}
+
 // ---------- Player of the Month ----------
 async function initPotm() {
   const idx = await getJSON("data/potm/index.json");
@@ -364,6 +405,8 @@ async function loadPotm(key) {
   ];
   const warsSub = w.wars_fought ? ` · ${w.wars_fought} chip wars fought · ${w.wars_lost} lost` : "";
   body.innerHTML = `
+    <div class="label mhead first">Player of the Month</div>
+    <div class="panel mpanel">
     <div class="spotlight">
       <div>
         <div class="crown">${s.in_progress ? "◆ CURRENT LEADER" : "★ CROWNED"}${
@@ -384,7 +427,9 @@ async function loadPotm(key) {
         `<tr><td class="rank">${i + 2}</td><td class="mvc">${moveHTML(r.move)}</td>
          <td>${pName(r.name)}</td><td>${raceTag(r.race)}</td>
          <td class="num">${r.wars_fought}</td><td class="num score">${fmt(r.score)}</td></tr>`).join("")
-      || '<tr><td colspan="6" class="loading">No other ranked players.</td></tr>'}</tbody></table>`;
+      || '<tr><td colspan="6" class="loading">No other ranked players.</td></tr>'}</tbody></table>
+    </div>
+    ${monthlyHTML(s.monthly, s.in_progress)}`;
 }
 
 // ---------- Leaderboards ----------

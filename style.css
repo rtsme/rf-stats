@@ -236,6 +236,42 @@ canvas{max-width:100%}
 .pr-badges{flex:none;color:var(--gold);font-size:11px;font-weight:700}
 .pr-empty{padding:12px;color:var(--dim);font-size:13px;text-align:center}
 
+/* ── monthly report (the /monthly command, on the site) ── */
+.mhead{margin:26px 0 8px}
+.mhead.first{margin-top:0}
+.mpanel{padding:16px}
+/* the spotlight already carries its own gold frame — don't double up inside the panel */
+.mpanel .spotlight{margin-bottom:14px}
+.mtop{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.mkills{color:var(--gold);font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;
+  text-align:right;line-height:1.1}
+.mkills span{display:block;color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.5px;
+  text-transform:uppercase}
+.mraces{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mrace{position:relative;background:var(--panel2);border:1px solid var(--border);border-radius:10px;
+  padding:11px}
+.mrace.Accretia{border-color:rgba(210,96,80,.55)}
+.mrace.Bellato{border-color:rgba(91,141,217,.55)}
+.mrace.Cora{border-color:rgba(143,194,74,.55)}
+.mrace.win{background:var(--goldpanel);border-color:var(--gold);border-width:2px}
+.mwin{color:var(--gold);font-size:9.5px;font-weight:800;letter-spacing:.6px;margin-bottom:2px}
+.mrname{font-size:12.5px;font-weight:700}
+.mrn{font-size:26px;font-weight:800;line-height:1.1;margin:2px 0 6px}
+.mbear{list-style:none;margin:0;padding:0;font-size:12px}
+.mbear li{display:flex;justify-content:space-between;gap:8px;padding:2px 0;
+  border-top:1px solid var(--grid)}
+.mbear .x{color:var(--dim);font-variant-numeric:tabular-nums}
+.mawards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.maward{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:11px}
+.mat{color:var(--gold);font-size:11.5px;font-weight:800;margin-bottom:4px}
+.maw{font-size:14px;font-weight:700;display:flex;align-items:baseline;gap:8px}
+.mv-c{color:var(--gold);font-variant-numeric:tabular-nums;margin-left:auto}
+.masub{color:#6f6152;font-size:10px;margin-top:2px}
+.marun{color:var(--dim);font-size:11px;margin-top:7px;padding-top:6px;border-top:1px solid var(--grid);
+  display:flex;gap:6px}
+.marun .mv-c{font-size:11px}
+@media (max-width:640px){.mraces{grid-template-columns:1fr}}
+
 /* ── rank movement arrows ── */
 td.mvc{width:38px;padding-right:0}
 .mv{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;cursor:help}
