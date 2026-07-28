@@ -21,15 +21,53 @@ function akaFor(name) {
   return (AKA.groups[gi] || []).filter(n => n.toLowerCase() !== String(name).toLowerCase());
 }
 // "Also known as" block + the button explaining how to submit a link
-function akaHTML(name) {
+const akaCombined = name => (AKA.combined || [])[AKA.of[String(name || "").toLowerCase()]] || null;
+
+function akaHTML(name, combined) {
   const others = akaFor(name);
+  const canCombine = !!akaCombined(name);
   return `<div class="aka">
       <span class="label" style="display:inline">Also known as</span>
       ${others.length
         ? `<span class="aka-names">${others.map(pName).join("")}</span>`
         : '<span class="dim">— none recorded</span>'}
+      ${canCombine ? `<button class="aka-combine${combined ? " on" : ""}" data-combine="${esc(name)}">${
+        combined ? "Show this character" : "Show combined"}</button>` : ""}
       <button class="aka-btn" data-aka="${esc(name)}">+ Link characters</button>
     </div>`;
+}
+
+// the whole person: every linked character merged (see db.combined_stats)
+function renderCombined(card, name) {
+  const c = akaCombined(name);
+  if (!c) return;
+  const list = (arr, key) => (arr && arr.length)
+    ? arr.map(x => `<li>${pName(x[key])}<span class="x">×${x.c}</span></li>`).join("")
+    : '<li class="dim">—</li>';
+  card.innerHTML = `
+    <button class="modal-close" aria-label="Close">×</button>
+    <div class="phead">
+      <div class="pname-big">${esc(c.names.join(" + "))}</div>
+      <div class="dim">Combined across ${c.names.length} linked characters</div>
+    </div>
+    <div class="pstats">
+      ${pstat("Kills", c.kills.toLocaleString())}${pstat("Deaths", c.deaths.toLocaleString())}
+      ${kdStat(c.kd, c.kd_notrap)}${pstat("Chip wars", c.wars.toLocaleString())}
+      ${c.chip_bearer_count ? pstat("Chip bearer", "×" + c.chip_bearer_count) : ""}
+      ${c.weapon ? pstat("Top weapon", c.weapon) : ""}
+      ${c.avg_victim_level != null ? pstat("Avg victim lvl", c.avg_victim_level) : ""}
+    </div>
+    ${c.first_seen ? `<div class="dim small">First seen ${esc(c.first_seen)}</div>` : ""}
+    ${akaHTML(name, true)}
+    <div class="pcols">
+      <div><div class="label">Most killed</div><ul class="plist">${list(c.top_victims, "victim")}</ul></div>
+      <div><div class="label">Killed most by</div><ul class="plist">${list(c.nemeses, "killer")}</ul></div>
+    </div>
+    <div class="label">Recent PvP</div>
+    <ul class="plist recent">${(c.recent || []).map(r =>
+      `<li><code>${esc(r.event_time)}</code> ${esc(r.message)}</li>`).join("") || '<li class="dim">—</li>'}</ul>
+    <div class="lite-note">Fights between these characters are left out, and a chip war both
+      fought in counts once. Leaderboards and achievements stay per character.</div>`;
 }
 function akaDialog(name) {
   const cmd = `/aka request character: ${name},OtherCharacter`;
@@ -249,6 +287,12 @@ function renderPlayer(card, p) {
       : '<li class="dim">—</li>'}</ul>`;
 }
 document.addEventListener("click", e => {
+  const cb = e.target.closest(".aka-combine");
+  if (cb) {
+    const card = $("#playerCard");
+    return cb.classList.contains("on") ? openPlayer(cb.dataset.combine)
+                                       : renderCombined(card, cb.dataset.combine);
+  }
   const ab = e.target.closest(".aka-btn");
   if (ab) { if (!$("#akaHelp")) akaDialog(ab.dataset.aka); return; }
   const pn = e.target.closest(".pname.known");
