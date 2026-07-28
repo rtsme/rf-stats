@@ -405,9 +405,22 @@ function initAchv() {
   $("#achvMeta").innerHTML = `${cat.length} achievements · ${tierCount} tiers ·
     hover a tier to see how many players have reached it`;
 
+  // ── recently achieved ──
+  const recent = ACH.recent || [];
+  const recentHTML = recent.length ? `
+    <div class="panel recents">
+      <p class="card-title">Recently achieved <span class="label">— newest first</span></p>
+      <ol class="rlist">${recent.map(r => `<li>
+          <span class="rwhen">${esc(r.at.slice(0, 16))}</span>
+          ${pName(r.player)}
+          <span class="rbadge ${TIER_CLASS[r.tier] || "t1"}">${esc(r.name)}</span>
+          <span class="rgroup">${esc(r.group)}</span>
+        </li>`).join("")}</ol>
+    </div>` : "";
+
   const groups = {};
   cat.forEach(a => (groups[a.group] = groups[a.group] || []).push(a));
-  box.innerHTML = Object.entries(groups).map(([g, list]) => `
+  box.innerHTML = recentHTML + Object.entries(groups).map(([g, list]) => `
     <div class="label" style="margin:14px 0 8px">${esc(g)}</div>
     <div class="acards">${list.map(a => {
       const rows = top[a.id] || [];

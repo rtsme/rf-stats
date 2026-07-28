@@ -11,6 +11,18 @@ body{
   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
   line-height:1.4; -webkit-font-smoothing:antialiased;
 }
+
+/* ── backdrop: RF Online concept art, fixed and heavily darkened so the data stays legible.
+   Fixed pseudo-elements rather than background-attachment:fixed, which janks on mobile. ── */
+body::before{content:"";position:fixed;inset:0;z-index:-2;
+  background:url("bg/resources.jpg") center/cover no-repeat}
+body::after{content:"";position:fixed;inset:0;z-index:-1;
+  background:linear-gradient(rgba(12,10,8,.75),rgba(12,10,8,.85))}
+/* panels go slightly translucent so the art reads through the gaps without hurting contrast */
+.panel,.acard{background:rgba(27,23,18,.86);backdrop-filter:blur(3px)}
+.tile{background:rgba(27,23,18,.78);backdrop-filter:blur(3px)}
+.modal-card,.presults{background:rgba(24,20,16,.96);backdrop-filter:blur(6px)}
+#psearch{background:rgba(27,23,18,.88);backdrop-filter:blur(3px)}
 a{color:var(--gold)}
 .wrap{max-width:960px;margin:0 auto;padding:20px 16px 60px}
 
@@ -183,6 +195,23 @@ td.mvc{width:38px;padding-right:0}
 .mv.dn{color:#d26050}
 .mv.same{color:var(--dim)}
 .mv.new{color:var(--bg);background:var(--gold);border-radius:4px;padding:1px 4px;font-size:9.5px;letter-spacing:.4px}
+
+/* ── recently achieved feed ── */
+.recents{margin-bottom:16px}
+.rlist{list-style:none;margin:0;padding:0;font-size:13px;max-height:300px;overflow-y:auto}
+.rlist li{display:flex;align-items:baseline;gap:10px;padding:6px 2px;border-bottom:1px solid var(--grid)}
+.rlist li:last-child{border-bottom:none}
+.rwhen{color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums;flex:none;width:104px}
+.rlist .pname{font-weight:700;flex:none}
+.rbadge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;
+  border:1px solid var(--border);background:var(--panel2);white-space:nowrap}
+.rbadge.t1{border-color:#a9713f;color:#c98a51}
+.rbadge.t2{border-color:#9fa8ad;color:#c2cbd0}
+.rbadge.t3{border-color:var(--gold);color:var(--gold)}
+.rbadge.t4{border-color:#7fd4e8;color:#8fe0f4}
+.rgroup{margin-left:auto;color:var(--dim);font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.4px;white-space:nowrap}
+@media (max-width:600px){.rgroup{display:none}.rwhen{width:88px}}
 
 /* ── achievements catalogue page ── */
 .acards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
