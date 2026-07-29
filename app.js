@@ -718,17 +718,25 @@ async function initRichTrends() {
 
   const cls = t.classes.top || [];
   if (cls.length) {
+    // Horizontal bars: the scales have to be declared here rather than spread from
+    // CHART_BASE — its explicit x/y would override the axis swap and draw nothing.
+    $("#classChart").parentElement.style.height = Math.max(240, 22 * cls.length) + "px";
     new Chart($("#classChart"), {
       type: "bar",
       options: {
-        ...CHART_BASE, indexAxis: "y",
+        responsive: true, maintainAspectRatio: false, indexAxis: "y",
         plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, ticks: { color: "#9a8a78", precision: 0 },
+               grid: { color: "#2a231c" } },
+          y: { ticks: { color: "#ede6da" }, grid: { display: false } },
+        },
       },
       data: {
         labels: cls.map(r => r.class),
         datasets: [{
           label: "Players", data: cls.map(r => r.players),
-          backgroundColor: "#e0a83e",
+          backgroundColor: "#e0a83e", borderRadius: 3,
         }],
       },
     });
