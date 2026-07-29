@@ -105,10 +105,13 @@ td.score{color:var(--gold);font-weight:700}
 .loading{color:var(--dim);padding:30px;text-align:center}
 .chartbox{position:relative;height:240px}
 
-/* ── chip war replay (embedded demo) ── */
-.cwframe{position:relative;width:100%;height:min(860px,86vh);border:1px solid var(--border);
-  border-radius:10px;overflow:hidden;background:var(--bg)}
-.cwframe iframe{width:100%;height:100%;border:0;display:block}
+/* ── chip war replay (link out to the full-size demo) ── */
+.cwlink{margin:26px 0 0;padding:14px 16px;background:var(--panel);border:1px solid var(--border);
+  border-radius:12px}
+.cwlink a{font-weight:800;font-size:15px;text-decoration:none;letter-spacing:.3px}
+.cwlink a:hover{text-decoration:underline}
+.cwlink a span{color:var(--dim);font-weight:400;font-size:12px;letter-spacing:0}
+.cwlink p{margin:6px 0 0;color:var(--dim);font-size:12.5px;max-width:78ch}
 
 /* ── kills-per-map ranking under the chart ── */
 .maplist{margin-top:14px;display:flex;flex-direction:column;gap:6px}
