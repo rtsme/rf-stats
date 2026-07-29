@@ -22,6 +22,7 @@
     <button data-tab="boards">Leaderboards</button>
     <button data-tab="achv">Achievements</button>
     <button data-tab="trends">Trends</button>
+    <button data-tab="cw">Chip War</button>
   </nav>
 
   <section id="potm" class="active">
@@ -70,6 +71,24 @@
     <div class="panel">
       <p class="card-title">Most played classes <span class="label" id="classWin">— last 30 days</span></p>
       <div class="chartbox"><canvas id="classChart"></canvas></div>
+    </div>
+  </section>
+
+  <section id="cw">
+    <div class="panel">
+      <p class="card-title">Chip war replay <span class="label">— demo</span></p>
+      <div class="dim small" style="margin-bottom:12px">
+        A single chip war played back on the map. Every kill, name, level, weapon and the chip
+        capture itself are real — taken from 20:00 on 21 July 2026, the busiest recent war.
+        <b>Positions are invented</b>, because the kill feed doesn't report coordinates yet;
+        this shows what becomes possible once it does. Support activity is inferred from the
+        fighting, not measured.
+      </div>
+      <div class="cwframe"><iframe id="cwFrame" title="Chip war replay" loading="lazy"></iframe></div>
+      <div class="dim small" style="margin-top:10px">
+        Best viewed full width — <a href="cw/" target="_blank" rel="noopener">open the replay in
+        its own tab</a>.
+      </div>
     </div>
   </section>
 

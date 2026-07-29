@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chip War Replay — Crag Mine Field</title>
+<style>
+:root{
+  --bg:#14100d; --panel:#1b1712; --panel2:#211a13; --text:#ede6da; --dim:#9a8a78;
+  --grid:#2a231c; --border:#4a3b2a; --gold:#e0a83e; --goldpanel:#2a2012;
+  --accretia:#d26050; --bellato:#5b8dd9; --cora:#8fc24a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;padding:14px 16px;background:var(--bg);color:var(--text);
+  font:14px/1.4 "Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+@media(max-width:900px){body{overflow:auto}}
+.wrap{max-width:1500px;margin:0 auto;height:100%;display:flex;flex-direction:column;gap:10px}
+
+/* header */
+.head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;flex:0 0 auto}
+h1{font-size:19px;margin:0;color:var(--gold);letter-spacing:.5px;white-space:nowrap}
+.sub{color:var(--dim);font-size:12.5px}
+.warn{font-size:11px;color:var(--gold);background:var(--goldpanel);
+  border:1px solid var(--border);border-radius:20px;padding:3px 10px;white-space:nowrap}
+
+/* layout */
+.cols{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px}
+@media(max-width:900px){.cols{grid-template-columns:1fr;overflow:auto}}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;
+  min-height:0;display:flex;flex-direction:column}
+
+/* map — sized off the viewport height so the whole page fits without scrolling */
+.mapwrap{align-items:center}
+.mapbox{position:relative;height:100%;aspect-ratio:741/731;width:auto;max-width:100%;
+  background:#0d0a08;border:1px solid var(--border);border-radius:8px;overflow:hidden;
+  margin:0 auto;flex:1 1 auto;min-height:0}
+.mapbox canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* controls */
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;flex:0 0 auto}
+button{background:rgba(27,23,18,.82);color:var(--dim);border:1px solid var(--border);
+  border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+button:hover{color:var(--text);border-color:var(--gold)}
+button.on{color:var(--gold);border-color:var(--gold);background:var(--goldpanel)}
+#play{min-width:86px;color:var(--gold);border-color:var(--gold);background:var(--goldpanel)}
+.speeds{display:flex;gap:5px;margin-left:auto}
+.speeds button{padding:6px 9px}
+.clock{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:700;min-width:100px;font-size:13px}
+input[type=range]{flex:1 1 100%;accent-color:var(--gold);margin:2px 0 0}
+.legend{display:flex;gap:12px;font-size:11.5px;color:var(--dim);margin-top:8px;flex-wrap:wrap;flex:0 0 auto}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}
+.legend .ring{width:11px;height:11px;border-radius:50%;background:none;border:2px solid var(--dim)}
+
+/* right column */
+.side{gap:12px;display:flex;flex-direction:column;min-height:0}
+.card-title{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);
+  font-weight:700;margin:0 0 8px;flex:0 0 auto}
+.card-title span{text-transform:none;letter-spacing:0;font-weight:400;opacity:.8}
+.score{display:flex;gap:8px;flex:0 0 auto}
+.score .s{flex:1;background:var(--panel2);border:1px solid var(--border);
+  border-radius:8px;padding:6px 8px;text-align:center}
+.score b{display:block;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.score span{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--dim);font-weight:700}
+
+/* support bars */
+.resgrid{display:flex;flex-direction:column;gap:7px;flex:0 0 auto}
+.rrow{display:grid;grid-template-columns:52px repeat(3,1fr);gap:7px;align-items:center}
+.rhead{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--dim);font-weight:700;
+  text-align:center}
+.rlab{font-size:11px;color:var(--dim);font-weight:600;text-transform:capitalize}
+.rcell{position:relative;background:var(--grid);border-radius:3px;height:15px;overflow:hidden}
+.rcell i{position:absolute;inset:0 auto 0 0;border-radius:3px;opacity:.75;
+  transition:width .2s linear}
+.rcell b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
+
+/* feed */
+.feedbox{flex:1 1 auto;min-height:0;overflow-y:auto;padding-right:4px}
+.feedbox::-webkit-scrollbar{width:7px}
+.feedbox::-webkit-scrollbar-thumb{background:var(--grid);border-radius:4px}
+.fe{padding:5px 7px;border-left:3px solid var(--grid);margin-bottom:4px;font-size:12.5px;
+  background:var(--panel2);border-radius:0 6px 6px 0;animation:in .18s ease-out}
+@keyframes in{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.fe .tm{color:var(--dim);font-size:10.5px;font-variant-numeric:tabular-nums;margin-right:5px}
+.fe .n{font-weight:700}
+.fe.chip{border-left-color:var(--gold);background:var(--goldpanel);color:var(--gold);font-weight:700}
+.fe.nuke{border-left-color:var(--gold)}
+.acc{color:var(--accretia)} .bel{color:var(--bellato)} .cor{color:var(--cora)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>Chip War Replay</h1>
+    <div class="sub" id="sub">loading…</div>
+    <div class="warn" id="simwarn"></div>
+  </div>
+
+  <div class="cols">
+    <div class="panel mapwrap">
+      <div class="mapbox">
+        <canvas id="map"></canvas>
+        <canvas id="fx"></canvas>
+      </div>
+      <div class="controls">
+        <button id="play">▶ Play</button>
+        <button id="restart">⟲ Restart</button>
+        <span class="clock" id="clock">00:00 / 00:00</span>
+        <span class="speeds" id="speeds"></span>
+        <input type="range" id="seek" min="0" max="1000" value="0">
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--accretia)"></i>Accretia</span>
+        <span><i style="background:var(--bellato)"></i>Bellato</span>
+        <span><i style="background:var(--cora)"></i>Cora</span>
+        <span><i class="ring"></i>nuke blast</span>
+        <span>— colour is the <b>killer's</b> race</span>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="panel" style="flex:0 0 auto">
+        <p class="card-title">Kills</p>
+        <div class="score" id="score"></div>
+      </div>
+      <div class="panel" style="flex:0 0 auto">
+        <p class="card-title">Support activity <span>— inferred, running total</span></p>
+        <div class="resgrid" id="res"></div>
+      </div>
+      <div class="panel" style="flex:1 1 auto;min-height:0">
+        <p class="card-title">Feed</p>
+        <div class="feedbox" id="feed"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RACE = { Accretia:"#d26050", Bellato:"#5b8dd9", Cora:"#8fc24a" };
+const CLS  = { Accretia:"acc", Bellato:"bel", Cora:"cor" };
+const RACES3 = ["Accretia","Bellato","Cora"];
+const SPEEDS = [1, 2, 5, 10, 25];
+
+// How long a square stays up, in REAL seconds. War-time is what advances, so the window
+// has to be scaled by playback speed or a 10x replay flashes them away instantly.
+const FADE = 1.0;
+const NUKE_SECS = 2.0;     // real seconds a blast circle takes to bloom and fade
+const NUKE_MIN_R = 42;     // a nuke that only caught one player still had an area
+// Telling a path from the rock it cuts through: ((r+g)/2 - b) scores ~50-70 on the pale
+// tracks and ~18-35 on the surrounding terrain.
+const PATH_YELLOW = 48, PATH_BRIGHT = 100;
+const PLACE_RADIUS = 46;   // how far a kill can sit from its engagement's anchor, in px
+// Fictional support activity. Nothing in the feed reports nets, heals or debuffs, so these
+// are inferred from what the fighting implies: a race taking casualties is healing, a race
+// landing kills is netting and debuffing to do it. Running totals — bar length is each
+// race's share of the current leader, so the comparison stays readable as they climb.
+const RES_GAIN = { heals: 1, debuffs: 1, nets: 1 };
+
+let D=null, t=0, playing=false, speed=5, last=0, shown=0;
+const $=s=>document.querySelector(s);
+const map=$("#map"), fx=$("#fx"), mctx=map.getContext("2d"), fctx=fx.getContext("2d");
+let img=null, BLASTS=[], RES=null;
+let RND=(s=>()=>((s=(s*1103515245+12345)&0x7fffffff)/0x7fffffff))(20260721);
+
+const mmss=s=>{s=Math.max(0,Math.floor(s));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+const esc=s=>String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// The map PNG has red annotation dots marking the fight hotspots. Paint them out, or they
+// read as permanent kills sitting on the map.
+function scrubDots(cv){
+  const c=cv.getContext("2d"), w=cv.width, h=cv.height;
+  const d=c.getImageData(0,0,w,h), p=d.data, hits=[];
+  for(let i=0;i<p.length;i+=4){
+    const r=p[i],g=p[i+1],b=p[i+2];
+    if(r>140 && r-g>70 && r-b>70) hits.push(i/4);
+  }
+  for(const idx of hits){
+    const x=idx%w, y=(idx/w)|0, i=idx*4;
+    const si=(Math.min(h-1,y+14)*w+Math.min(w-1,x+14))*4;
+    p[i]=p[si]; p[i+1]=p[si+1]; p[i+2]=p[si+2];
+  }
+  c.putImageData(d,0,0);
+  return hits.length;
+}
+
+function drawBase(){
+  map.width=img.naturalWidth; map.height=img.naturalHeight;
+  fx.width=img.naturalWidth;  fx.height=img.naturalHeight;
+  mctx.drawImage(img,0,0);
+  scrubDots(map);
+}
+
+// ---- put the simulated kills on the paths, not the rock ----
+// People fight along the tracks, so scattering kills over open terrain looks wrong. This
+// reads the map, finds the walkable pixels and moves each engagement onto the nearest
+// stretch of road, keeping the squad together. Only runs while positions are simulated.
+function pathMask(){
+  const W=map.width, H=map.height, d=mctx.getImageData(0,0,W,H).data;
+  const cell=12, cols=Math.ceil(W/cell), grid=new Map(), pts=[];
+  for(let y=4;y<H-4;y+=2) for(let x=4;x<W-4;x+=2){
+    const i=(y*W+x)*4, r=d[i], g=d[i+1], b=d[i+2];
+    if((r+g)/2-b >= PATH_YELLOW && (r+g+b)/3 >= PATH_BRIGHT){
+      const p=[x,y]; pts.push(p);
+      const key=((y/cell)|0)*cols+((x/cell)|0);
+      let c=grid.get(key); if(!c) grid.set(key,c=[]);
+      c.push(p);
+    }
+  }
+  return {pts, grid, cell, cols, W, H};
+}
+function nearestPath(M,x,y){
+  let best=null, bd=Infinity;
+  for(const p of M.pts){
+    const dd=(p[0]-x)*(p[0]-x)+(p[1]-y)*(p[1]-y);
+    if(dd<bd){ bd=dd; best=p; }
+  }
+  return best;
+}
+function nearPath(M,ax,ay,rad){
+  const out=[], c=M.cell, cols=M.cols;
+  const x0=Math.max(0,((ax-rad)/c)|0), x1=((ax+rad)/c)|0;
+  const y0=Math.max(0,((ay-rad)/c)|0), y1=((ay+rad)/c)|0;
+  for(let gy=y0;gy<=y1;gy++) for(let gx=x0;gx<=x1;gx++){
+    const cc=M.grid.get(gy*cols+gx); if(!cc) continue;
+    for(const p of cc){
+      const dx=p[0]-ax, dy=p[1]-ay;
+      if(dx*dx+dy*dy<=rad*rad) out.push(p);
+    }
+  }
+  return out;
+}
+function placeOnPaths(){
+  const M=pathMask();
+  if(!M.pts.length) return 0;
+  const groups=new Map();
+  for(const e of D.events){
+    if(e.type!=="kill") continue;
+    const g=e.g??0;
+    let a=groups.get(g); if(!a) groups.set(g,a=[]);
+    a.push(e);
+  }
+  let moved=0;
+  for(const [,evs] of groups){
+    const cx=evs.reduce((s,e)=>s+e.x,0)/evs.length*M.W;
+    const cy=evs.reduce((s,e)=>s+e.y,0)/evs.length*M.H;
+    const anchor=nearestPath(M,cx,cy);
+    if(!anchor) continue;
+    const pool=nearPath(M,anchor[0],anchor[1],PLACE_RADIUS);
+    const use=pool.length?pool:[anchor];
+    for(const e of evs){
+      const p=use[(RND()*use.length)|0];
+      e.x=(p[0]+(RND()-.5)*5)/M.W;
+      e.y=(p[1]+(RND()-.5)*5)/M.H;
+      moved++;
+    }
+  }
+  return moved;
+}
+
+// ---- nukes ----
+// One nuke shows up as several kills sharing a timestamp and a killer. Group them back
+// together so the blast can be drawn around everyone it caught.
+function findBlasts(){
+  const W=map.width, H=map.height, by=new Map();
+  for(const e of D.events){
+    if(e.type!=="kill" || e.w!=="Nuke") continue;
+    const key=e.t+"|"+e.k;
+    let a=by.get(key); if(!a) by.set(key,a=[]);
+    a.push(e);
+  }
+  BLASTS=[...by.values()].map(evs=>{
+    const cx=evs.reduce((s,e)=>s+e.x,0)/evs.length*W;
+    const cy=evs.reduce((s,e)=>s+e.y,0)/evs.length*H;
+    const reach=Math.max(...evs.map(e=>Math.hypot(e.x*W-cx, e.y*H-cy)));
+    return {t:evs[0].t, race:evs[0].kr, by:evs[0].k, n:evs.length,
+            x:cx, y:cy, r:Math.max(NUKE_MIN_R, reach+22)};
+  }).sort((a,b)=>a.t-b.t);
+  return BLASTS.length;
+}
+
+// ---- support activity (running totals, sampled per war-second) ----
+function buildResources(){
+  const N=Math.ceil(D.duration)+1, cur={}, out={};
+  for(const r of RACES3){ cur[r]={nets:0,heals:0,debuffs:0}; out[r]={nets:[],heals:[],debuffs:[]}; }
+  const at=new Map();
+  for(const e of D.events){
+    if(e.type!=="kill") continue;
+    const s=Math.floor(e.t);
+    let a=at.get(s); if(!a) at.set(s,a=[]);
+    a.push(e);
+  }
+  const recent=[];                     // kill times, for spotting focused bursts
+  for(let s=0;s<N;s++){
+    for(const e of (at.get(s)||[])){
+      // the dying race is patching people up — unless it was a nuke, which nobody heals
+      if(e.vr && cur[e.vr] && e.w!=="Nuke") cur[e.vr].heals+=RES_GAIN.heals;
+      if(e.kr && cur[e.kr]){
+        cur[e.kr].debuffs+=RES_GAIN.debuffs;      // steady: softening targets up
+        recent.push([s,e.kr]);
+        while(recent.length && s-recent[0][0]>10) recent.shift();
+        // nets pin groups down, so they track focused bursts rather than lone kills
+        if(recent.filter(x=>x[1]===e.kr).length>=2) cur[e.kr].nets+=RES_GAIN.nets;
+      }
+    }
+    for(const r of RACES3) for(const k in cur[r]) out[r][k].push(cur[r][k]);
+  }
+  RES=out;
+  return N;
+}
+
+function drawResources(){
+  if(!RES) return;
+  const s=Math.min(Math.floor(t), RES.Accretia.nets.length-1);
+  const head=`<div class="rrow"><span></span>`
+    + RACES3.map(r=>`<span class="rhead" style="color:${RACE[r]}">${r.slice(0,3)}</span>`).join("")
+    + `</div>`;
+  const rows=["nets","heals","debuffs"].map(k=>{
+    const vals=RACES3.map(r=>RES[r][k][s]||0);
+    const mx=Math.max(1,...vals);
+    return `<div class="rrow"><span class="rlab">${k}</span>` + RACES3.map((r,i)=>
+      `<span class="rcell"><i style="width:${100*vals[i]/mx}%;background:${RACE[r]}"></i>
+        <b>${vals[i]}</b></span>`).join("") + `</div>`;
+  }).join("");
+  $("#res").innerHTML=head+rows;
+}
+
+function render(){
+  fctx.clearRect(0,0,fx.width,fx.height);
+  const W=fx.width, H=fx.height;
+
+  // nuke blasts sit under the squares so the kills stay readable on top
+  const nwin=NUKE_SECS*speed;
+  for(const b of BLASTS){
+    const age=t-b.t;
+    if(age<0 || age>nwin) continue;
+    const p=age/nwin;
+    // Reach full size by two-thirds through, then hold while fading — if the ring only hits
+    // its true radius as it vanishes, you never see how big the blast was.
+    const r=Math.max(1, b.r*Math.min(1,(1-Math.pow(1-p,3))/0.92));
+    const col=RACE[b.race]||"#9a8a78";
+    const a=p<.12 ? p/.12 : Math.pow(1-(p-.12)/.88, 1.5);
+    const grd=fctx.createRadialGradient(b.x,b.y,Math.max(1,r*.25),b.x,b.y,r);
+    grd.addColorStop(0, col+"00");
+    grd.addColorStop(.72, col+"00");
+    grd.addColorStop(1, col+"66");
+    fctx.globalAlpha=a; fctx.fillStyle=grd;
+    fctx.beginPath(); fctx.arc(b.x,b.y,r,0,7); fctx.fill();
+    fctx.strokeStyle=col; fctx.lineWidth=2.5; fctx.globalAlpha=a*.95;
+    fctx.beginPath(); fctx.arc(b.x,b.y,r,0,7); fctx.stroke();
+  }
+  fctx.globalAlpha=1;
+
+  const win=FADE*speed;            // war-seconds that add up to FADE seconds on screen
+  for(const e of D.events){
+    if(e.type!=="kill") continue;
+    const age=t-e.t;
+    if(age<0 || age>win) continue;
+    const a=1-(age/win);
+    const col=RACE[e.kr]||"#9a8a78";
+    const s=Math.round(9+6*a);                 // pops in, shrinks as it fades
+    const x=e.x*W, y=e.y*H;
+    fctx.globalAlpha=a*0.35; fctx.fillStyle=col;
+    fctx.fillRect(x-s, y-s, s*2, s*2);         // soft halo
+    fctx.globalAlpha=a; fctx.fillStyle=col;
+    fctx.fillRect(x-s/2, y-s/2, s, s);
+    fctx.strokeStyle="rgba(0,0,0,.65)"; fctx.lineWidth=1.5;
+    fctx.strokeRect(x-s/2, y-s/2, s, s);
+  }
+  fctx.globalAlpha=1;
+}
+
+function nameTag(n,r){return `<span class="n ${CLS[r]||""}">${esc(n)}</span>`}
+function feedItem(e){
+  const div=document.createElement("div");
+  if(e.type==="chip"){
+    div.className="fe chip";
+    div.innerHTML=`<span class="tm">${mmss(e.t)}</span>🏆 ${esc(e.k)} took the ${esc(e.chip)} chip — ${esc(e.kr)} win`;
+  }else{
+    div.className="fe"+(e.w==="Nuke"?" nuke":"");
+    div.style.borderLeftColor=RACE[e.kr]||"#2a231c";
+    div.innerHTML=`<span class="tm">${mmss(e.t)}</span>${nameTag(e.k,e.kr)}
+      <span style="color:var(--dim)">killed</span> ${nameTag(e.v,e.vr)}`
+      + (e.w?` <span style="color:var(--dim)">· ${esc(e.w)}</span>`:"");
+  }
+  return div;
+}
+
+const tally={Accretia:0,Bellato:0,Cora:0};
+function drawScore(){
+  $("#score").innerHTML=RACES3.map(r=>
+    `<div class="s"><b style="color:${RACE[r]}">${tally[r]}</b><span>${r.slice(0,3)}</span></div>`).join("");
+}
+
+function syncTo(newT){
+  // rebuild the feed when scrubbing backwards, otherwise just append what's new
+  if(newT<t){
+    shown=0; $("#feed").innerHTML="";
+    for(const k in tally) tally[k]=0;
+  }
+  t=newT;
+  const feed=$("#feed");
+  while(shown<D.events.length && D.events[shown].t<=t){
+    const e=D.events[shown++];
+    feed.prepend(feedItem(e));
+    if(e.type==="kill" && tally[e.kr]!=null) tally[e.kr]++;
+  }
+  while(feed.children.length>200) feed.removeChild(feed.lastChild);
+  drawScore(); drawResources();
+  $("#clock").textContent=mmss(t)+" / "+mmss(D.duration);
+  $("#seek").value=Math.round(1000*t/D.duration);
+  render();
+}
+
+function loop(ts){
+  if(!playing) return;
+  if(!last) last=ts;
+  const dt=(ts-last)/1000; last=ts;
+  let nt=t+dt*speed;
+  if(nt>=D.duration){ nt=D.duration; playing=false; $("#play").textContent="▶ Play"; }
+  syncTo(nt);
+  if(playing) requestAnimationFrame(loop);
+}
+function setPlaying(p){
+  playing=p; last=0;
+  $("#play").textContent=p?"❚❚ Pause":"▶ Play";
+  if(p) requestAnimationFrame(loop);
+}
+
+(async function(){
+  D=await (await fetch("replay.json",{cache:"no-store"})).json();
+  const s=D.summary;
+  $("#sub").textContent=`${D.map} · ${D.start} · ${s.kills} kills · ${s.fighters} fighters`
+    + (s.winner?` · won by ${s.winner} (${s.bearer})`:"");
+  $("#simwarn").textContent="positions simulated";
+
+  $("#speeds").innerHTML=SPEEDS.map(x=>`<button data-s="${x}"${x===speed?' class="on"':""}>${x}×</button>`).join("");
+  $("#speeds").addEventListener("click",ev=>{
+    const b=ev.target.closest("button"); if(!b) return;
+    speed=+b.dataset.s;
+    [...$("#speeds").children].forEach(c=>c.classList.toggle("on",c===b));
+  });
+  $("#play").addEventListener("click",()=>setPlaying(!playing));
+  $("#restart").addEventListener("click",()=>{ setPlaying(false); t=1; syncTo(0); });
+  $("#seek").addEventListener("input",e=>{ syncTo(D.duration*e.target.value/1000); });
+
+  img=new Image();
+  img.onload=()=>{
+    drawBase();
+    if(D.simulated) placeOnPaths();
+    findBlasts();                    // after placement — the radius follows the victims
+    buildResources();
+    syncTo(0); setPlaying(true);
+  };
+  img.src="map.png";
+})();
+</script>
+</body>
+</html>

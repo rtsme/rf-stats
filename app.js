@@ -322,7 +322,14 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => { if (e.key === "Escape") closePlayer(); });
 
 // ---------- tabs (charts built lazily so their canvas is visible when sized) ----------
-const TAB_INIT = { trends: initTrends, achv: async () => initAchv() };
+// The replay is a self-contained page in cw/ rather than part of this one — it owns the
+// whole viewport and its own animation loop, and keeping it separate means it can't collide
+// with anything here. Loaded only when the tab is opened; it pulls ~850KB of map and events.
+async function initCw() {
+  const f = $("#cwFrame");
+  if (f && !f.src) f.src = "cw/";
+}
+const TAB_INIT = { trends: initTrends, achv: async () => initAchv(), cw: initCw };
 const tabDone = {};
 function showTab(name) {
   document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
