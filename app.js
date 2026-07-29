@@ -476,6 +476,7 @@ const ICONS = {
   lostwar: '<path d="M5.5 21V3.5M5.5 5h11l-2 3 2 3h-11"/>',
   nuke: '<path d="M4 11a8 4.5 0 0116 0z"/><path d="M9 11.5v3.5c0 1.8 1.2 2.8 3 2.8s3-1 3-2.8V11.5"/><path d="M7.5 20.5h9"/>',
   crowned: '<path d="M4 8.5l3 9h10l3-9-5 3-3-5.5-3 5.5z"/>',
+  mvp: '<circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5L7 21.5l5-2.5 5 2.5-1.5-8"/>',
   w_staff: '<path d="M6.5 21L17 5.5"/><circle cx="18.2" cy="4" r="2.4"/>',
   w_bow: '<path d="M6.5 3.5a13 13 0 010 17"/><path d="M6.5 12h12.5M15 8.2l4 3.8-4 3.8"/>',
   w_launcher: '<rect x="3" y="9" width="13.5" height="6" rx="2"/><path d="M16.5 12h4.5M6.5 15v3.5"/>',
