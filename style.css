@@ -101,9 +101,17 @@ td.score{color:var(--gold);font-weight:700}
 .popnow .stat b{display:block;font-size:24px;font-weight:800}
 .popnow .stat span{color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
 
-#popSince{margin:-4px 0 10px}
+#popSince,#richSince{margin:-4px 0 10px}
 .loading{color:var(--dim);padding:30px;text-align:center}
 .chartbox{position:relative;height:240px}
+
+/* ── kills-per-map ranking under the chart ── */
+.maplist{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.maprow{display:grid;grid-template-columns:minmax(90px,1fr) 3fr auto;gap:10px;align-items:center;font-size:13px}
+.maprow b{font-variant-numeric:tabular-nums;color:var(--gold)}
+.mapname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mapbar{background:#2a231c;border-radius:3px;height:8px;overflow:hidden}
+.mapbar i{display:block;height:100%;background:linear-gradient(90deg,#8a6a2a,var(--gold));border-radius:3px}
 canvas{max-width:100%}
 
 /* ── clickable player names ── */

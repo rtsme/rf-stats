@@ -662,6 +662,77 @@ async function initTrends() {
         ({ label: rc, data: cw.series.map(r => r[rc] || 0), borderColor: RACE_COL[rc], tension: .25, pointRadius: 0 })),
     },
   });
+
+  await initRichTrends();
+}
+
+// Maps and advanced classes — both come from the richer kill feed, which only started naming
+// them partway through, so these say so instead of looking mysteriously empty.
+const MAP_COL = ["#e0a83e", "#7fb2e5", "#c98ee0", "#8fc24a", "#e07f7f", "#5fc9b8"];
+
+async function initRichTrends() {
+  let t;
+  try { t = await getJSON("data/trends.json"); } catch (e) { return; }
+
+  if (t.since) {
+    const [y, m, d] = t.since.slice(0, 10).split("-");
+    $("#richSince").textContent = `Map and class data is only available from ${d}-${m}-${y}`;
+  }
+  $("#mapWin").textContent = `— last ${t.maps.days} days`;
+  $("#classWin").textContent = `— last ${t.classes.days} days`;
+
+  const totals = t.maps.totals || [];
+  if (!totals.length) {
+    $("#mapList").innerHTML = `<div class="dim small">No map data yet.</div>`;
+  } else {
+    const max = totals[0].kills;
+    $("#mapList").innerHTML = totals.map(r => `
+      <div class="maprow">
+        <span class="mapname">${esc(r.map)}</span>
+        <span class="mapbar"><i style="width:${(100 * r.kills / max).toFixed(1)}%"></i></span>
+        <b>${r.kills.toLocaleString()}</b>
+      </div>`).join("");
+  }
+
+  // stacked daily view of the busiest maps, so you can see a map heat up day to day
+  const d = t.maps.daily || { maps: [], days: [] };
+  if (d.days.length) {
+    new Chart($("#mapChart"), {
+      type: "bar",
+      options: {
+        ...CHART_BASE,
+        scales: {
+          x: { ...CHART_BASE.scales.x, stacked: true },
+          y: { ...CHART_BASE.scales.y, stacked: true },
+        },
+      },
+      data: {
+        labels: d.days.map(r => r.date.slice(5)),
+        datasets: d.maps.map((m, i) => ({
+          label: m, data: d.days.map(r => r[m] || 0),
+          backgroundColor: MAP_COL[i % MAP_COL.length],
+        })),
+      },
+    });
+  }
+
+  const cls = t.classes.top || [];
+  if (cls.length) {
+    new Chart($("#classChart"), {
+      type: "bar",
+      options: {
+        ...CHART_BASE, indexAxis: "y",
+        plugins: { legend: { display: false } },
+      },
+      data: {
+        labels: cls.map(r => r.class),
+        datasets: [{
+          label: "Players", data: cls.map(r => r.players),
+          backgroundColor: "#e0a83e",
+        }],
+      },
+    });
+  }
 }
 
 // ---------- boot ----------
