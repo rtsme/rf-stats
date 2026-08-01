@@ -87,6 +87,25 @@ input[type=range]{flex:1 1 100%;accent-color:var(--gold);margin:2px 0 0}
 .fe.chip{border-left-color:var(--gold);background:var(--goldpanel);color:var(--gold);font-weight:700}
 .fe.nuke{border-left-color:var(--gold)}
 .acc{color:var(--accretia)} .bel{color:var(--bellato)} .cor{color:var(--cora)}
+
+/* ── mobile ──
+   On a narrow screen the map and the feed become stacked rows sharing one viewport
+   height, so every event the feed grew stole height from the map and it shrank as the
+   war went on. Size the map off its WIDTH instead — nothing else can push that — and
+   let the page scroll normally. */
+@media(max-width:900px){
+  html,body{height:auto}
+  body{overflow:auto;padding:12px}
+  .wrap{height:auto}
+  .cols{grid-template-columns:1fr;overflow:visible;flex:0 0 auto;min-height:0}
+  .mapbox{width:100%;height:auto;flex:0 0 auto;margin:0}
+  .side{min-height:0}
+  .feedbox{height:44vh;flex:0 0 auto}
+  .head{gap:8px}
+  h1{font-size:17px}
+  .speeds{margin-left:0}
+  .controls{margin-top:8px}
+}
 </style>
 </head>
 <body>
