@@ -404,6 +404,16 @@ async function loadPotm(key) {
     ["Other kills", w.kills_out, w.pts_out, "var(--bellato)"],
   ];
   const warsSub = w.wars_fought ? ` · ${w.wars_fought} chip wars fought · ${w.wars_lost} lost` : "";
+  // Feats only run from db.POTM_FEATS_FROM. Earlier months still show the band, zeroed, with
+  // a note saying why — quietly dropping it would just look like the winner earned nothing.
+  const flive = s.feats_on;
+  const dedNext = (wt.dedicated_tiers || []).slice().reverse().find(t => t[0] > w.dedicated);
+  const feats = [
+    ["Dedicated", `${w.dedicated}d`, w.pts_dedicated,
+      dedNext ? `${dedNext[0]}d next` : "max tier", "var(--gold)"],
+    ["Denier", w.denier, w.pts_denier, `${wt.denier_pts} each`, "var(--muted)"],
+    ["Kingslayer", w.kingslayer, w.pts_kingslayer, `${wt.kingslayer_pts} each`, "var(--accretia)"],
+  ];
   body.innerHTML = `
     <div class="label mhead first">Player of the Month</div>
     <div class="panel mpanel">
@@ -420,6 +430,13 @@ async function loadPotm(key) {
     <div class="tiles">${tiles.map(([t, n, p, c]) =>
       `<div class="tile"><div class="t" style="color:${c}">${t}</div><div class="n">${n}</div><div class="p">+${fmt(p)} pts</div></div>`).join("")}</div>
     <div class="bonus">★ hardship bonus +${fmt(w.hardship_bonus)} pts</div>
+    <div class="label">Feats</div>
+    <div class="feats">${feats.map(([t, n, p, foot, c]) =>
+      `<div class="feat${flive && p > 0 ? "" : " off"}" style="--fc:${c}">
+         <div class="t">${t}</div><div class="n">${flive ? n : 0}</div>
+         <div class="p">${flive ? `+${fmt(p)} pts · ${foot}` : "—"}</div></div>`).join("")}</div>
+    ${flive ? `<div class="bonus">◆ feats +${fmt(w.pts_feats)} pts</div>`
+            : `<div class="featnote">* Feats only available from August 2026</div>`}
     <div class="label" style="margin-bottom:8px">Runners-up${s.move_since
       ? ' <span class="dim" style="font-weight:400;text-transform:none">— ▲▼ change since midnight</span>' : ""}</div>
     <table><thead><tr><th></th><th></th><th>Player</th><th>Race</th><th class="num">Wars fought</th><th class="num">Score</th></tr></thead>

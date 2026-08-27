@@ -20,7 +20,7 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;
   background:linear-gradient(rgba(12,10,8,.75),rgba(12,10,8,.85))}
 /* panels go slightly translucent so the art reads through the gaps without hurting contrast */
 .panel,.acard{background:rgba(27,23,18,.86);backdrop-filter:blur(3px)}
-.tile{background:rgba(27,23,18,.78);backdrop-filter:blur(3px)}
+.tile,.feat{background:rgba(27,23,18,.78);backdrop-filter:blur(3px)}
 .modal-card,.presults{background:rgba(24,20,16,.96);backdrop-filter:blur(6px)}
 #psearch{background:rgba(27,23,18,.88);backdrop-filter:blur(3px)}
 a{color:var(--gold)}
@@ -81,6 +81,17 @@ select{
 .tile .n{font-size:26px;font-weight:800;margin:4px 0 2px}
 .tile .p{color:var(--dim);font-size:11px}
 .bonus{text-align:center;color:var(--gold);font-size:13px;font-weight:700;margin:8px 0 20px}
+/* Feats: scored on how you showed up, not on how many you killed, so they get a band of
+   their own rather than four more kill buckets. A stripe carries the earned/not state. */
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0 6px}
+.feat{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--fc);
+  border-radius:10px;padding:12px;text-align:center}
+.feat.off{border-top-color:var(--border);opacity:.6}
+.feat .t{font-size:10px;font-weight:700;letter-spacing:.4px;color:var(--fc)}
+.feat.off .t{color:var(--dim)}
+.feat .n{font-size:26px;font-weight:800;margin:4px 0 2px}
+.feat .p{color:var(--dim);font-size:11px}
+.featnote{text-align:center;color:var(--dim);font-size:12px;margin:8px 0 20px}
 
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--grid)}
@@ -411,6 +422,7 @@ td.mvc{width:38px;padding-right:0}
 
 @media (max-width:720px){
   .tiles{grid-template-columns:repeat(2,1fr)}
+  .feats{grid-template-columns:1fr}
   .grid2{grid-template-columns:1fr}
   .spotlight .name{font-size:26px}
   .spotlight .score b{font-size:34px}
