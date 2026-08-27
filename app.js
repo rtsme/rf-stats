@@ -316,10 +316,36 @@ document.addEventListener("click", e => {
   const ab = e.target.closest(".aka-btn");
   if (ab) { if (!$("#akaHelp")) akaDialog(ab.dataset.aka); return; }
   const pn = e.target.closest(".pname.known");
-  if (pn) return openPlayer(pn.dataset.name);
+  if (pn) return openPlayer(pn.dataset.name);          // the name keeps its own click
+  const rrow = e.target.closest("tr.rrow");
+  if (rrow) return togglePotmRow(rrow);
   if (e.target.closest(".modal-close") || e.target.classList.contains("modal-bg")) closePlayer();
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape") closePlayer(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") return closePlayer();
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const rrow = e.target.closest && e.target.closest("tr.rrow");
+  if (rrow) { e.preventDefault(); togglePotmRow(rrow); }   // rows are reachable by keyboard too
+});
+
+// Expand one runner to the same breakdown the leader gets. One open at a time, or the table
+// grows to several screens; clicking the open row again closes it.
+function togglePotmRow(row) {
+  const exp = row.nextElementSibling;
+  if (!exp || !exp.classList.contains("exp") || !POTM) return;
+  const wasOpen = !exp.hidden;
+  const tb = row.parentNode;
+  tb.querySelectorAll("tr.exp").forEach(x => { x.hidden = true; x.firstElementChild.innerHTML = ""; });
+  tb.querySelectorAll("tr.rrow").forEach(x => {
+    x.classList.remove("open"); x.setAttribute("aria-expanded", "false");
+  });
+  if (wasOpen) return;
+  exp.firstElementChild.innerHTML =
+    runnerBreakdown(POTM.runners[+row.dataset.i], POTM.weights, POTM.feats_on);
+  exp.hidden = false;
+  row.classList.add("open");
+  row.setAttribute("aria-expanded", "true");
+}
 
 // ---------- tabs (charts built lazily so their canvas is visible when sized) ----------
 const TAB_INIT = { trends: initTrends, achv: async () => initAchv() };
@@ -391,29 +417,59 @@ async function initPotm() {
   else $("#potmBody").innerHTML = '<div class="loading">No months published yet.</div>';
 }
 
+// The score-breakdown markup, shared by the leader's card and the expandable runner rows so
+// the two can't drift. Every runner carries the same fields as the winner in the JSON.
+function potmTiles(p, wt) {
+  const ck = wt.cw_kill_mult, lwm = wt.lost_war_mult;
+  return [
+    ["Lost wars kills", p.kills_cw_lost, ck * lwm * p.kills_cw_lost, "var(--gold)"],
+    ["Won war kills", p.kills_cw_won, ck * p.kills_cw_won, "var(--cora)"],
+    ["Chip bearer", p.bearer, p.pts_bearer, "var(--muted)"],
+    ["Other kills", p.kills_out, p.pts_out, "var(--bellato)"],
+  ].map(([t, n, v, c]) =>
+    `<div class="tile"><div class="t" style="color:${c}">${t}</div><div class="n">${n}</div><div class="p">+${fmt(v)} pts</div></div>`).join("");
+}
+
+// Feats only run from db.POTM_FEATS_FROM. Earlier months still show the band, zeroed, with
+// a note saying why — quietly dropping it would just look like nobody earned anything.
+function potmFeats(p, wt, flive) {
+  const dedNext = (wt.dedicated_tiers || []).slice().reverse().find(t => t[0] > p.dedicated);
+  return [
+    ["Dedicated", `${p.dedicated}d`, p.pts_dedicated,
+      dedNext ? `${dedNext[0]}d next` : "max tier", "var(--gold)"],
+    ["Denier", p.denier, p.pts_denier, `${wt.denier_pts} each`, "var(--muted)"],
+    ["Kingslayer", p.kingslayer, p.pts_kingslayer, `${wt.kingslayer_pts} each`, "var(--accretia)"],
+  ].map(([t, n, v, foot, c]) =>
+    `<div class="feat${flive && v > 0 ? "" : " off"}" style="--fc:${c}">
+       <div class="t">${t}</div><div class="n">${flive ? n : 0}</div>
+       <div class="p">${flive ? `+${fmt(v)} pts · ${foot}` : "—"}</div></div>`).join("");
+}
+
+// One runner's breakdown: the leader's figures at table scale, with the totals on one line
+// instead of the card's separate bonus rows.
+function runnerBreakdown(r, wt, flive) {
+  return `<div class="expbox">
+    <div class="tiles">${potmTiles(r, wt)}</div>
+    <div class="feats">${potmFeats(r, wt, flive)}</div>
+    <div class="sums">
+      <span>★ hardship bonus +${fmt(r.hardship_bonus)}</span>
+      ${flive ? `<span>◆ feats +${fmt(r.pts_feats)}</span>` : ""}
+      <span class="d">${r.wars_fought} wars fought · ${r.wars_lost} lost</span>
+      <span>= ${fmt(r.score)} total</span>
+    </div></div>`;
+}
+
+let POTM = null;      // the month on screen, for the runner rows to expand against
+
 async function loadPotm(key) {
   const body = $("#potmBody");
   body.innerHTML = '<div class="loading">loading…</div>';
   const s = await getJSON(`data/potm/${key}.json`);
-  const w = s.winner, wt = s.weights, ck = wt.cw_kill_mult, lwm = wt.lost_war_mult;
+  const w = s.winner, wt = s.weights;
   const wr = s.winning_race;
-  const tiles = [
-    ["Lost wars kills", w.kills_cw_lost, ck * lwm * w.kills_cw_lost, "var(--gold)"],
-    ["Won war kills", w.kills_cw_won, ck * w.kills_cw_won, "var(--cora)"],
-    ["Chip bearer", w.bearer, w.pts_bearer, "var(--muted)"],
-    ["Other kills", w.kills_out, w.pts_out, "var(--bellato)"],
-  ];
   const warsSub = w.wars_fought ? ` · ${w.wars_fought} chip wars fought · ${w.wars_lost} lost` : "";
-  // Feats only run from db.POTM_FEATS_FROM. Earlier months still show the band, zeroed, with
-  // a note saying why — quietly dropping it would just look like the winner earned nothing.
   const flive = s.feats_on;
-  const dedNext = (wt.dedicated_tiers || []).slice().reverse().find(t => t[0] > w.dedicated);
-  const feats = [
-    ["Dedicated", `${w.dedicated}d`, w.pts_dedicated,
-      dedNext ? `${dedNext[0]}d next` : "max tier", "var(--gold)"],
-    ["Denier", w.denier, w.pts_denier, `${wt.denier_pts} each`, "var(--muted)"],
-    ["Kingslayer", w.kingslayer, w.pts_kingslayer, `${wt.kingslayer_pts} each`, "var(--accretia)"],
-  ];
+  POTM = s;
   body.innerHTML = `
     <div class="label mhead first">Player of the Month</div>
     <div class="panel mpanel">
@@ -427,24 +483,24 @@ async function loadPotm(key) {
       <div class="score"><b>${fmt(w.score)}</b><span>SCORE</span></div>
     </div>
     <div class="label">Score breakdown</div>
-    <div class="tiles">${tiles.map(([t, n, p, c]) =>
-      `<div class="tile"><div class="t" style="color:${c}">${t}</div><div class="n">${n}</div><div class="p">+${fmt(p)} pts</div></div>`).join("")}</div>
+    <div class="tiles">${potmTiles(w, wt)}</div>
     <div class="bonus">★ hardship bonus +${fmt(w.hardship_bonus)} pts</div>
     <div class="label">Feats</div>
-    <div class="feats">${feats.map(([t, n, p, foot, c]) =>
-      `<div class="feat${flive && p > 0 ? "" : " off"}" style="--fc:${c}">
-         <div class="t">${t}</div><div class="n">${flive ? n : 0}</div>
-         <div class="p">${flive ? `+${fmt(p)} pts · ${foot}` : "—"}</div></div>`).join("")}</div>
+    <div class="feats">${potmFeats(w, wt, flive)}</div>
     ${flive ? `<div class="bonus">◆ feats +${fmt(w.pts_feats)} pts</div>`
             : `<div class="featnote">* Feats only available from August 2026</div>`}
     <div class="label" style="margin-bottom:8px">Runners-up${s.move_since
-      ? ' <span class="dim" style="font-weight:400;text-transform:none">— ▲▼ change since midnight</span>' : ""}</div>
-    <table><thead><tr><th></th><th></th><th>Player</th><th>Race</th><th class="num">Wars fought</th><th class="num">Score</th></tr></thead>
+      ? ' <span class="dim" style="font-weight:400;text-transform:none">— ▲▼ change since midnight</span>' : ""}
+      <span class="dim" style="font-weight:400;text-transform:none">— click a row for its breakdown</span></div>
+    <table><thead><tr><th></th><th></th><th></th><th>Player</th><th>Race</th><th class="num">Wars fought</th><th class="num">Score</th></tr></thead>
       <tbody>${s.runners.map((r, i) =>
-        `<tr><td class="rank">${i + 2}</td><td class="mvc">${moveHTML(r.move)}</td>
+        `<tr class="rrow" data-i="${i}" tabindex="0" role="button" aria-expanded="false">
+         <td class="caret"><span>›</span></td>
+         <td class="rank">${i + 2}</td><td class="mvc">${moveHTML(r.move)}</td>
          <td>${pName(r.name)}</td><td>${raceTag(r.race)}</td>
-         <td class="num">${r.wars_fought}</td><td class="num score">${fmt(r.score)}</td></tr>`).join("")
-      || '<tr><td colspan="6" class="loading">No other ranked players.</td></tr>'}</tbody></table>
+         <td class="num">${r.wars_fought}</td><td class="num score">${fmt(r.score)}</td></tr>
+         <tr class="exp" hidden><td colspan="7"></td></tr>`).join("")
+      || '<tr><td colspan="7" class="loading">No other ranked players.</td></tr>'}</tbody></table>
     </div>
     ${monthlyHTML(s.monthly, s.in_progress)}`;
 }
