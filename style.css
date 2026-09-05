@@ -30,6 +30,16 @@ header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-
 header.top h1{font-size:22px;margin:0;color:var(--gold);letter-spacing:.5px}
 header.top .sub{color:var(--dim);font-size:13px}
 .meta{color:var(--dim);font-size:12px;margin-bottom:18px}
+/* Site-wide notice for the Sept 2026 scoring change. Gold rail rather than a red alert —
+   it is a rule change, not a fault, and it has to stay readable for months. */
+.notice{display:flex;gap:14px;align-items:flex-start;margin:0 0 18px;padding:14px 16px;
+  background:var(--goldpanel);border:1px solid var(--gold);border-left:4px solid var(--gold);
+  border-radius:10px;font-size:14px;line-height:1.5}
+.notice b{color:var(--gold)}
+.notice-tag{flex:none;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--bg);background:var(--gold);border-radius:3px;padding:3px 7px;margin-top:2px}
+.notice-sub{display:block;margin-top:5px;color:var(--dim);font-size:13px}
+@media (max-width:560px){.notice{flex-direction:column;gap:8px}}
 
 nav.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
 nav.tabs button{
@@ -76,6 +86,8 @@ select{
 .spotlight .score span{color:var(--dim);font-size:11px;font-weight:700;letter-spacing:.6px}
 
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 6px}
+/* three tiles from the month "Other kills" stopped being a thing (db.CW_ONLY_FROM) */
+.tiles.n3{grid-template-columns:repeat(3,1fr)}
 .tile{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
 .tile .t{font-size:10px;font-weight:700;letter-spacing:.4px}
 .tile .n{font-size:26px;font-weight:800;margin:4px 0 2px}

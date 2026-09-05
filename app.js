@@ -341,7 +341,7 @@ function togglePotmRow(row) {
   });
   if (wasOpen) return;
   exp.firstElementChild.innerHTML =
-    runnerBreakdown(POTM.runners[+row.dataset.i], POTM.weights, POTM.feats_on);
+    runnerBreakdown(POTM.runners[+row.dataset.i], POTM.weights, POTM.feats_on, POTM.cw_only);
   exp.hidden = false;
   row.classList.add("open");
   row.setAttribute("aria-expanded", "true");
@@ -419,14 +419,17 @@ async function initPotm() {
 
 // The score-breakdown markup, shared by the leader's card and the expandable runner rows so
 // the two can't drift. Every runner carries the same fields as the winner in the JSON.
-function potmTiles(p, wt) {
+function potmTiles(p, wt, cwOnly) {
   const ck = wt.cw_kill_mult, lwm = wt.lost_war_mult;
-  return [
+  const tiles = [
     ["Lost wars kills", p.kills_cw_lost, ck * lwm * p.kills_cw_lost, "var(--gold)"],
     ["Won war kills", p.kills_cw_won, ck * p.kills_cw_won, "var(--cora)"],
     ["Chip bearer", p.bearer, p.pts_bearer, "var(--muted)"],
-    ["Other kills", p.kills_out, p.pts_out, "var(--bellato)"],
-  ].map(([t, n, v, c]) =>
+  ];
+  // From db.CW_ONLY_FROM a kill outside the war counts towards nothing, so this tile could
+  // only ever read zero. Older months keep it, so past cards are unchanged.
+  if (!cwOnly) tiles.push(["Other kills", p.kills_out, p.pts_out, "var(--bellato)"]);
+  return tiles.map(([t, n, v, c]) =>
     `<div class="tile"><div class="t" style="color:${c}">${t}</div><div class="n">${n}</div><div class="p">+${fmt(v)} pts</div></div>`).join("");
 }
 
@@ -447,9 +450,9 @@ function potmFeats(p, wt, flive) {
 
 // One runner's breakdown: the leader's figures at table scale, with the totals on one line
 // instead of the card's separate bonus rows.
-function runnerBreakdown(r, wt, flive) {
+function runnerBreakdown(r, wt, flive, cwOnly) {
   return `<div class="expbox">
-    <div class="tiles">${potmTiles(r, wt)}</div>
+    <div class="tiles${cwOnly ? " n3" : ""}">${potmTiles(r, wt, cwOnly)}</div>
     <div class="feats">${potmFeats(r, wt, flive)}</div>
     <div class="sums">
       <span>★ hardship bonus +${fmt(r.hardship_bonus)}</span>
@@ -483,7 +486,7 @@ async function loadPotm(key) {
       <div class="score"><b>${fmt(w.score)}</b><span>SCORE</span></div>
     </div>
     <div class="label">Score breakdown</div>
-    <div class="tiles">${potmTiles(w, wt)}</div>
+    <div class="tiles${s.cw_only ? " n3" : ""}">${potmTiles(w, wt, s.cw_only)}</div>
     <div class="bonus">★ hardship bonus +${fmt(w.hardship_bonus)} pts</div>
     <div class="label">Feats</div>
     <div class="feats">${potmFeats(w, wt, flive)}</div>
